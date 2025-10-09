@@ -1,0 +1,160 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Playfair+Display:wght@400;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+  */
+  :root {
+    --background: 34 64% 97%;
+    --foreground: 64 32% 20%;
+
+    --card: 34 64% 97%;
+    --card-foreground: 64 32% 20%;
+
+    --popover: 34 64% 97%;
+    --popover-foreground: 64 32% 20%;
+
+    --primary: 55 20% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 56 22% 60%;
+    --secondary-foreground: 64 32% 20%;
+
+    --muted: 34 30% 93%;
+    --muted-foreground: 64 18% 28%;
+
+    --accent: 64 32% 20%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 55 10% 70%;
+    --input: 64 8% 30%;
+    --ring: 64 32% 20%;
+
+    --radius: 0.5rem;
+
+    --form-bg: 34 64% 95%;
+    --form-text: 120 4% 16%;
+    --form-border: 120 4% 16%;
+
+    /* Buttons (from aesthetics) */
+    --btn-bg: 55 20% 35%;
+    --btn-hover-bg: 64 32% 20%;
+    --btn-text: 0 0% 100%;
+    --btn-border: 55 20% 35%;
+    --btn-border-hover: 64 32% 20%;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 55 20% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 56 22% 45%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 64 8% 20%;
+    --muted-foreground: 64 10% 75%;
+
+    --accent: 64 32% 30%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 40.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 160 15% 24%;
+    --input: 160 15% 24%;
+    --ring: 104 24% 56%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Force zero border-radius site-wide */
+  * {
+    border-radius: 0 !important;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family:
+      "Alpino",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      Segoe UI,
+      Roboto,
+      Inter,
+      Arial,
+      "Noto Sans",
+      "Apple Color Emoji",
+      "Segoe UI Emoji" !important;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family:
+      "Playfair Display", Georgia, Cambria, "Times New Roman", Times, serif !important;
+    color: hsl(var(--foreground));
+  }
+  p {
+    color: hsl(var(--foreground));
+  }
+
+  input,
+  select,
+  textarea {
+    background-color: hsl(var(--form-bg));
+    color: hsl(var(--form-text));
+    border: 1px solid hsl(var(--form-border) / 0.3);
+    border-radius: 0;
+    font-size: 16px;
+  }
+}
