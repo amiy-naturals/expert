@@ -1,0 +1,24 @@
+[build]
+  command = "npm run build:client"
+  functions = "netlify/functions"
+  publish = "dist/spa"
+
+[build.environment]
+  # Allow Supabase public client keys to appear in built assets
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY"
+
+[functions]
+  node_bundler = "esbuild"
+
+# API function proxy
+[[redirects]]
+  force = true
+  from = "/api/*"
+  status = 200
+  to = "/.netlify/functions/api/:splat"
+
+# SPA fallback so reloading any route serves index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
