@@ -18,6 +18,7 @@ export type PointsReason =
   | "referral_customer_milestone"
   | "referral_doctor_bonus"
   | "subscription_renewal"
+  | "onboarding_bonus"
   | "admin_adjustment";
 
 type RecordPointsArgs = {
@@ -62,6 +63,35 @@ export async function recordPointsTransaction({
   });
   if (insertErr) throw insertErr;
   return nextBalance;
+}
+
+export async function recordLockedPointsTransaction({
+  userId,
+  delta,
+  reason,
+  orderId,
+  metadata,
+}: RecordPointsArgs) {
+  const supabase = getServerSupabase();
+  const { data: userRow, error: userErr } = await supabase
+    .from("users")
+    .select("points_balance")
+    .eq("id", userId)
+    .maybeSingle();
+  if (userErr) throw userErr;
+  const currentBalance = Number(userRow?.points_balance ?? 0);
+  const balanceAfter = currentBalance; // do not change balance until unlocked
+  const fullMeta = { ...(metadata ?? {}), locked: true } as Record<string, unknown>;
+  const { error: insertErr } = await supabase.from("points_transactions").insert({
+    user_id: userId,
+    delta,
+    reason,
+    order_id: orderId ?? null,
+    balance_after: balanceAfter,
+    metadata: fullMeta,
+  });
+  if (insertErr) throw insertErr;
+  return balanceAfter;
 }
 
 export function calculateEarnedPoints(amountInRupees: number) {
@@ -130,19 +160,40 @@ export async function awardOrderPoints({
       if (!pct) return;
       const pts = Math.floor(orderTotal * pct);
       if (pts <= 0) return;
-      await recordPointsTransaction({
-        userId: referrerId,
-        delta: pts,
-        reason:
-          level === 1
-            ? "referral_level_1"
-            : level === 2
-              ? "referral_level_2"
-              : "referral_level_3",
-        orderId,
-        metadata: { buyerId: userId, level, pct },
-      });
-      // update rank for referrer receiving commission
+      const supabase = getServerSupabase();
+      let provisional = false;
+      try {
+        const { data: row } = await supabase
+          .from("users")
+          .select("is_doctor_provisional")
+          .eq("id", referrerId)
+          .maybeSingle();
+        provisional = Boolean((row as any)?.is_doctor_provisional);
+      } catch {}
+      const reason: PointsReason =
+        level === 1
+          ? "referral_level_1"
+          : level === 2
+            ? "referral_level_2"
+            : "referral_level_3";
+      const meta = { buyerId: userId, level, pct } as Record<string, unknown>;
+      if (provisional) {
+        await recordLockedPointsTransaction({
+          userId: referrerId,
+          delta: pts,
+          reason,
+          orderId,
+          metadata: meta,
+        });
+      } else {
+        await recordPointsTransaction({
+          userId: referrerId,
+          delta: pts,
+          reason,
+          orderId,
+          metadata: meta,
+        });
+      }
       await maybeUpdateRank(referrerId);
     }),
   );
