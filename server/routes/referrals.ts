@@ -107,4 +107,15 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
   }
 });
 
+router.get("/summary", requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const summary = await getReferralNetworkSummary(req.authUser.id);
+    const total = (summary.level1 ?? 0) + (summary.level2 ?? 0) + (summary.level3 ?? 0);
+    res.json({ level1: summary.level1, level2: summary.level2, level3: summary.level3, total });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  }
+});
+
 export default router;
