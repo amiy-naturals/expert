@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
 import { getServerSupabase } from "../lib/supabase";
+import { getReferralNetworkSummary } from "../lib/referrals";
 
 const router = Router();
 
