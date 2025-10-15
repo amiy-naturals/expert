@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import Layout from "@/components/site/Layout";
 import Army from "./pages/Army";
 import Join from "./pages/Join";
+import JoinExpress from "./pages/JoinExpress";
 import Compensation from "./pages/Compensation";
 
 import Shop from "./pages/Shop";
@@ -142,6 +143,7 @@ const App = () => {
               <Route index element={<Index />} />
               <Route path="army" element={<Army />} />
               <Route path="join" element={<Join />} />
+              <Route path="join/express" element={<JoinExpress />} />
               <Route element={<ProtectedOutlet />}>
                 <Route element={<OnboardedOutlet />}>
                   <Route path="dashboard" element={<DashboardLayout />}>

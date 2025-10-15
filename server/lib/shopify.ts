@@ -71,6 +71,24 @@ function getBase() {
   };
 }
 
+export function verifyWebhookHmac(rawBody: Buffer | string, hmacHeader?: string | null) {
+  const secret = getConfig().shopify.webhookSecret;
+  if (!secret) return true; // allow if not configured
+  if (!hmacHeader) return false;
+  const crypto = require("crypto") as typeof import("crypto");
+  const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody), "utf8");
+  const digest = crypto.createHmac("sha256", secret).update(body).digest("base64");
+  return digest === hmacHeader;
+}
+
+export async function updateOrderNote(orderId: number | string, note: string, note_attributes?: { name: string; value: string | number | boolean }[]) {
+  type Response = { order: { id: number } };
+  await shopifyRequest<Response>(`/orders/${orderId}.json`, {
+    method: "PUT",
+    body: JSON.stringify({ order: { id: Number(orderId), note, note_attributes } }),
+  });
+}
+
 async function shopifyRequest<T>(path: string, init?: RequestInit): Promise<{ data: T; headers: Headers }> {
   const { base, token } = getBase();
   const controller = new AbortController();

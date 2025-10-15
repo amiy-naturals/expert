@@ -15,12 +15,16 @@ import doctorsRouter from "./routes/doctors";
 import rankRouter from "./routes/rank";
 import expertRouter from "./routes/expert";
 import authRouter from "./routes/auth";
+import enrollRouter from "./routes/enroll";
+import webhooksRouter from "./routes/webhooks";
 
 export function createServer() {
   const app = express();
 
   // Middleware
   app.use(cors());
+  // Shopify webhooks require raw body for HMAC verification
+  app.use('/api/webhooks/shopify', express.raw({ type: '*/*' }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
@@ -46,6 +50,8 @@ export function createServer() {
   app.use('/api/rank', rankRouter);
   app.use('/api/expert', expertRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/enroll', enrollRouter);
+  app.use('/api/webhooks', webhooksRouter);
 
   return app;
 }

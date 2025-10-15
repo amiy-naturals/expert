@@ -9,7 +9,7 @@ export default function Overview() {
   const activeDocs = Number(rankData?.stats?.activeDoctors ?? 0);
   const teamSales = Number(network?.summary?.totalNetworkSales ?? 0);
   const stats = [
-    { label: "Earnings (this month)", value: `₹${monthly.toLocaleString()}` },
+    { label: "Earnings (this month)", value: `��${monthly.toLocaleString()}` },
     { label: "Team Sales", value: `₹${teamSales.toLocaleString()}` },
     { label: "Patients Enrolled", value: String(patients) },
     { label: "Active Doctors", value: String(activeDocs) },
@@ -65,6 +65,19 @@ export default function Overview() {
       </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border bg-white p-6">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold">Complete your setup</div>
+            <a href="/dashboard/profile" className="text-sm font-semibold underline">Unlock payouts</a>
+          </div>
+          <ol className="mt-3 space-y-2 text-sm">
+            <li className="flex items-center justify-between"><span>Upload license</span><span className="rounded bg-yellow-100 px-2 py-0.5 text-yellow-900">Pending</span></li>
+            <li className="flex items-center justify-between"><span>Add UPI</span><span className="rounded bg-gray-100 px-2 py-0.5">Required</span></li>
+            <li className="flex items-center justify-between"><span>Upload avatar</span><span className="rounded bg-gray-100 px-2 py-0.5">+100 pts</span></li>
+            <li className="flex items-center justify-between"><span>Clinic details</span><span className="rounded bg-gray-100 px-2 py-0.5">Optional</span></li>
+          </ol>
+          <div className="mt-3 text-xs text-muted-foreground">Earnings accrue as pending until KYC is approved.</div>
+        </div>
         {items.map((i) => (
           <a
             key={i.title}

@@ -67,6 +67,8 @@ export const DoctorsAPI = {
   adminListApplications: () => apiFetch('/doctors/admin/applications'),
   adminApproveApplication: (id: string) => apiFetch(`/doctors/admin/applications/${encodeURIComponent(id)}/approve`, { method: 'POST' }),
   adminRejectApplication: (id: string) => apiFetch(`/doctors/admin/applications/${encodeURIComponent(id)}/reject`, { method: 'POST' }),
+  invite: (payload: { phone: string; name?: string; city?: string }) => apiFetch('/doctors/invite', { method: 'POST', body: JSON.stringify(payload) }) as Promise<{ token: string; joinPath: string; joinUrl: string; expiresAt: string }>,
+  acceptInvite: (payload: { token: string; otp?: string; phone?: string }) => apiFetch('/doctors/accept-invite', { method: 'POST', body: JSON.stringify(payload) }) as Promise<{ success: true; referralLink: string; bonus: number; locked: boolean }>,
 };
 
 export const LeaderboardAPI = {
