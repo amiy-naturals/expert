@@ -143,6 +143,7 @@ const App = () => {
               <Route index element={<Index />} />
               <Route path="army" element={<Army />} />
               <Route path="join" element={<Join />} />
+              <Route path="join/express" element={<JoinExpress />} />
               <Route element={<ProtectedOutlet />}>
                 <Route element={<OnboardedOutlet />}>
                   <Route path="dashboard" element={<DashboardLayout />}>
