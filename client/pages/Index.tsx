@@ -227,6 +227,37 @@ function DebugSection() {
     { label: '/.netlify/functions/subscription-renew', page: 'cron', action: () => call('/.netlify/functions/subscription-renew', {}, false) },
     { label: '/.netlify/functions/sync-loyalty', page: 'cron', action: () => call('/.netlify/functions/sync-loyalty', {}, false) },
     { label: '/.netlify/functions/update-leaderboard', page: 'cron', action: () => call('/.netlify/functions/update-leaderboard', {}, false) },
+
+    // New: Express join + enroll + webhooks
+    { label: 'POST /api/doctors/invite', page: 'doctors', sample: { phone: '+919999999999', name: 'Dr A', city: 'Delhi' }, action: async () => {
+        const phone = window.prompt('phone (+E164)','+919999999999') || '+919999999999';
+        const name = window.prompt('name','Dr A') || undefined;
+        const city = window.prompt('city','Delhi') || undefined;
+        await call('/doctors/invite', { method: 'POST', body: JSON.stringify({ phone, name, city }) });
+      } },
+    { label: 'POST /api/doctors/accept-invite', page: 'doctors', sample: { token: 'abc', otp: '123456', phone: '+919999999999' }, action: async () => {
+        const token = window.prompt('invite token','') || '';
+        const useSession = window.confirm('Use current session? (OK=yes / Cancel=OTP)');
+        if (useSession) {
+          await call('/doctors/accept-invite', { method: 'POST', body: JSON.stringify({ token }) });
+        } else {
+          const phone = window.prompt('phone (+E164)','+919999999999') || '+919999999999';
+          const otp = window.prompt('otp','123456') || '123456';
+          await call('/doctors/accept-invite', { method: 'POST', body: JSON.stringify({ token, phone, otp }) });
+        }
+      } },
+    { label: 'POST /api/enroll', page: 'enroll', sample: { referral_code: 'AM-EXPERT', email: 'p@example.com' }, action: async () => {
+        const referral_code = window.prompt('referral_code','AM-EXPERT') || 'AM-EXPERT';
+        const email = window.prompt('email (leave blank to use phone)','p@example.com') || '';
+        let body: any = { referral_code };
+        if (email) body.email = email; else { const phone = window.prompt('phone (+E164)','+919999999999') || '+919999999999'; body.phone = phone; }
+        await call('/enroll', { method: 'POST', body: JSON.stringify(body) });
+      } },
+    { label: 'POST /api/webhooks/shopify (requires HMAC)', page: 'webhooks', sample: { id: 12345, email: 'p@example.com', created_at: new Date().toISOString(), currency: 'INR', total_price: '100.00', customer: { email: 'p@example.com' }, financial_status: 'paid' }, action: async () => {
+        const json = window.prompt('JSON body', JSON.stringify({ id: 12345, email: 'p@example.com', created_at: new Date().toISOString(), currency: 'INR', total_price: '100.00', customer: { email: 'p@example.com' }, financial_status: 'paid' })) || '{}';
+        const hmac = window.prompt('X-Shopify-Hmac-Sha256 (leave blank to expect 401)','') || '';
+        await call('/webhooks/shopify', { method: 'POST', body: json, headers: hmac ? { 'X-Shopify-Hmac-Sha256': hmac, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' } }, false);
+      } },
   ];
 
   return (
