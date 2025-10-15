@@ -61,6 +61,53 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
     const e2 = await enrich(level2Ids);
     const e3 = await enrich(level3Ids);
 
+    // Aggregate spend from external customers since join via order_attributions
+    const allLevelIds = [...level1Ids, ...level2Ids, ...level3Ids].filter(Boolean);
+    const spendMap: Record<string, { orders_after_join: number; amount_after_join: number }> = {};
+    if (allLevelIds.length) {
+      const atts = await supabase
+        .from("order_attributions")
+        .select("level1_doctor_id,total,paid")
+        .in("level1_doctor_id", allLevelIds)
+        .eq("paid", true);
+      if (atts.error) throw atts.error;
+      (atts.data ?? []).forEach((row: any) => {
+        const id = row.level1_doctor_id as string;
+        const prev = spendMap[id] || { orders_after_join: 0, amount_after_join: 0 };
+        spendMap[id] = { orders_after_join: prev.orders_after_join + 1, amount_after_join: prev.amount_after_join + Number(row.total || 0) };
+      });
+    }
+
+    // Points contributed to current doctor by each node
+    const contribL1: Record<string, number> = {};
+    if (level1Ids.length) {
+      const rows = await supabase
+        .from("order_attributions")
+        .select("level1_doctor_id,level2_doctor_id,points_l2,paid")
+        .in("level1_doctor_id", level1Ids)
+        .eq("level2_doctor_id", userId)
+        .eq("paid", true);
+      if (rows.error) throw rows.error;
+      (rows.data ?? []).forEach((r: any) => {
+        const id = r.level1_doctor_id as string;
+        contribL1[id] = (contribL1[id] || 0) + Number(r.points_l2 || 0);
+      });
+    }
+    const contribL2: Record<string, number> = {};
+    if (level2Ids.length) {
+      const rows = await supabase
+        .from("order_attributions")
+        .select("level2_doctor_id,level3_doctor_id,points_l3,paid")
+        .in("level2_doctor_id", level2Ids)
+        .eq("level3_doctor_id", userId)
+        .eq("paid", true);
+      if (rows.error) throw rows.error;
+      (rows.data ?? []).forEach((r: any) => {
+        const id = r.level2_doctor_id as string;
+        contribL2[id] = (contribL2[id] || 0) + Number(r.points_l3 || 0);
+      });
+    }
+
     const level1Rows = (level1.data ?? []).map((r: any) => ({
       id: r.referred?.id,
       name: r.referred?.name,
@@ -70,6 +117,9 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
       points: e1[r.referred?.id]?.points ?? 0,
       level: 1,
       commissionPct: 0.025,
+      orders_after_join: spendMap[r.referred?.id || ""]?.orders_after_join || 0,
+      amount_after_join: spendMap[r.referred?.id || ""]?.amount_after_join || 0,
+      points_contributed_to_doctor: contribL1[r.referred?.id || ""] || 0,
     }));
     const level2Rows = (level2.data ?? []).map((r: any) => ({
       id: r.referred?.id,
@@ -80,6 +130,9 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
       points: e2[r.referred?.id]?.points ?? 0,
       level: 2,
       commissionPct: 0.015,
+      orders_after_join: spendMap[r.referred?.id || ""]?.orders_after_join || 0,
+      amount_after_join: spendMap[r.referred?.id || ""]?.amount_after_join || 0,
+      points_contributed_to_doctor: contribL2[r.referred?.id || ""] || 0,
     }));
     const level3Rows = (level3.data ?? []).map((r: any) => ({
       id: r.referred?.id,
@@ -90,9 +143,12 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
       points: e3[r.referred?.id]?.points ?? 0,
       level: 3,
       commissionPct: 0.01,
+      orders_after_join: spendMap[r.referred?.id || ""]?.orders_after_join || 0,
+      amount_after_join: spendMap[r.referred?.id || ""]?.amount_after_join || 0,
+      points_contributed_to_doctor: 0,
     }));
 
-    const totalSales = 0; // optional: compute from orders table amount sum
+    const totalSales = Object.values(spendMap).reduce((s, v) => s + v.amount_after_join, 0);
     const totalReferralPoints = [...level1Rows, ...level2Rows, ...level3Rows].reduce((s, r) => s + (r.points || 0), 0);
 
     res.json({
