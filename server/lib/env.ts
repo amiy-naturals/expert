@@ -12,6 +12,7 @@ const envSchema = z.object({
     .string()
     .min(1)
     .default("2024-10"),
+  SHOPIFY_WEBHOOK_SECRET: z.string().optional(),
   RAZORPAY_KEY_ID: z.string().min(1),
   RAZORPAY_KEY_SECRET: z.string().min(1),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
@@ -38,6 +39,7 @@ export type AppConfig = {
     adminToken: string;
     storefrontToken?: string;
     apiVersion: string;
+    webhookSecret?: string;
   };
   razorpay: {
     keyId: string;
@@ -86,6 +88,7 @@ export function getConfig(): AppConfig {
           adminToken: env.SHOPIFY_ADMIN_ACCESS_TOKEN ?? "",
           storefrontToken: env.SHOPIFY_STOREFRONT_ACCESS_TOKEN,
           apiVersion: env.SHOPIFY_API_VERSION ?? "2024-10",
+          webhookSecret: env.SHOPIFY_WEBHOOK_SECRET,
         },
         razorpay: {
           keyId: env.RAZORPAY_KEY_ID ?? "",
@@ -129,6 +132,7 @@ export function getConfig(): AppConfig {
       adminToken: env.SHOPIFY_ADMIN_ACCESS_TOKEN,
       storefrontToken: env.SHOPIFY_STOREFRONT_ACCESS_TOKEN,
       apiVersion: env.SHOPIFY_API_VERSION,
+      webhookSecret: env.SHOPIFY_WEBHOOK_SECRET,
     },
     razorpay: {
       keyId: env.RAZORPAY_KEY_ID,
