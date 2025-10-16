@@ -43,6 +43,9 @@ import AdminSettings from "./pages/admin/Settings";
 import LeaderboardPage from "./pages/Leaderboard";
 import AdminApplications from "./pages/admin/Applications";
 import AdminReviewsPage from "./pages/admin/Reviews";
+import Debug from "./pages/Debug";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 import { useEffect } from "react";
 import supabase, { getSupabase } from "@/lib/supabase";
 
@@ -176,6 +179,9 @@ const App = () => {
                 <Route path="reviews" element={<AdminReviewsPage />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
+              <Route path="debug" element={<Debug />} />
+              <Route path="privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="terms-and-conditions" element={<TermsAndConditions />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Route>
