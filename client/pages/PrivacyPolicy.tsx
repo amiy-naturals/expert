@@ -81,7 +81,7 @@ export default function PrivacyPolicy() {
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
         <p className="mb-4">
-          If you have any questions about this Privacy Policy, please contact us at support@amiyexperts.com
+          If you have any questions about this Privacy Policy, please contact us at support@mayinbrands.com
         </p>
       </section>
 
