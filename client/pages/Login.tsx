@@ -76,10 +76,7 @@ export default function Login() {
           </div>
         )}
 
-        <p className="mt-6 text-xs text-muted-foreground text-center">
-          No account? <Link to="/join" className="underline">Start onboarding</Link>
-        </p>
-        <p className="mt-3 text-xs text-muted-foreground text-center space-x-2">
+        <p className="mt-6 text-xs text-muted-foreground text-center space-x-2">
           <Link to="/privacy-policy" className="underline">Privacy Policy</Link>
           <span>•</span>
           <Link to="/terms-and-conditions" className="underline">Terms & Conditions</Link>
