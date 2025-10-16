@@ -1351,6 +1351,679 @@ Customer Referral Milestone: 1000 points (after 3 purchases)
 
 ---
 
+## 🏗️ ARCHITECTURE DIAGRAM
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                 INTERNET                                     │
+│                          (End Users & Webhooks)                              │
+└────────────────┬────────────────────────────────────┬──────────────────────┘
+                 │                                    │
+                 ▼                                    ▼
+        ┌────────────────────┐            ┌────────────────────────┐
+        │   Netlify CDN      │            │  External Services     │
+        │  (Static Assets)   │            │   Webhooks & APIs      │
+        │  - React SPA       │            │  ├─ Shopify Webhooks   │
+        │  - CSS/JS          │            │  ├─ Razorpay Webhooks  │
+        │  - Images          │            │  └─ Supabase Auth      │
+        └────────┬───────────┘            └──────────┬─────────────┘
+                 │                                   │
+                 └─────────��─────┬───────────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │  Netlify Edge Network   │
+                    │  - SSL/TLS Termination  │
+                    │  - Compression          │
+                    │  - Caching              │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │  Netlify Functions API  │
+                    │  (Serverless Backend)   │
+                    │  ├─ /api/checkout       │
+                    │  ├─ /api/orders         │
+                    │  ├─ /api/doctors        │
+                    │  ├─ /api/loyalty        │
+                    │  ├─ /api/rank           │
+                    │  ├─ /api/admin          │
+                    │  ├─ /api/webhooks       │
+                    │  └─ /api/[routes]       │
+                    └────────────┬────────────┘
+                                 │
+                ┌────────────────┼────────────────┬──────────────────┐
+                ▼                ▼                ▼                  ▼
+        ┌────────────────┐ ┌─────────────┐ ┌──────────────┐ ┌─────────────┐
+        │ Supabase       │ │  Shopify    │ │  Razorpay    │ │  External   │
+        │ (Database)     │ │ (Products & │ │  (Payments)  │ │  Services   │
+        │                │ │  Webhooks)  │ │              │ │             │
+        │ ├─ PostgreSQL  │ │             │ │ ├─ Orders    │ │ ├─ Email    │
+        │ ├─ Auth        │ │ ├─ Products │ │ ├─ Payment   │ │ ├─ Analytics│
+        │ ├─ Storage     │ │ ├─ Orders   │ │ │  Signature  │ │ └─ Monitoring
+        │ └─ Real-time   │ │ └─ Webhooks │ │ └─ Refunds   │ │             │
+        └────────────────┘ └─────────────┘ └──────────────┘ └─────────────┘
+                │                │
+                │                │
+        ┌───────▼────────┐ ┌─────▼──────────┐
+        │  Data Tables   │ │  External      │
+        │                │ │  Customers     │
+        │ ├─ users       │ │                │
+        │ ├─ orders      │ │ ├─ Shopify IDs │
+        │ ├─ points_*    │ │ ├─ Email/Phone │
+        │ ├─ referrals   │ │ └─ Attribution │
+        │ ├─ doctor_*    │ │                │
+        │ ├─ rank_*      │ │                │
+        │ └─ [others]    │ │                │
+        └────────────────┘ └────────────────┘
+```
+
+### **Architecture Flow**
+
+1. **Client Layer** (React SPA)
+   - Served from Netlify CDN
+   - Runs on user's browser
+   - Uses Supabase Auth for login
+   - Makes API calls to Netlify Functions
+
+2. **Edge/API Layer** (Netlify Functions)
+   - Serverless Express backend
+   - Runs in AWS Lambda (behind Netlify)
+   - Handles business logic
+   - Verifies payments & signatures
+   - Manages data transactions
+
+3. **Data Layer** (Supabase PostgreSQL)
+   - Stores all app data
+   - User authentication
+   - Real-time subscriptions
+   - File storage (avatars, documents)
+
+4. **External Services** (Integrations)
+   - **Shopify**: Product catalog + webhooks
+   - **Razorpay**: Payment processing
+   - **Supabase Auth**: OAuth/Email auth
+   - **Monitoring**: Logging/error tracking
+
+---
+
+## 🚀 DEPLOYMENT GUIDE (Netlify)
+
+### **Phase 1: Pre-Deployment Setup**
+
+#### **1.1 Environment Variables**
+
+Create `.env` file locally with all required variables:
+
+```bash
+# Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGc...
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+
+# Shopify
+SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
+SHOPIFY_ADMIN_ACCESS_TOKEN=shpat_...
+SHOPIFY_API_VERSION=2024-10
+SHOPIFY_WEBHOOK_SECRET=your-webhook-secret
+
+# Razorpay
+RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_SECRET=your-secret-key
+RAZORPAY_CURRENCY=INR
+
+# Configuration
+LOYALTY_POINT_PER_RUPEE=0.2
+LOYALTY_MAX_REDEMPTION_PCT=0.5
+REFERRAL_LEVEL1_RATE=0.025
+REFERRAL_LEVEL2_RATE=0.015
+REFERRAL_LEVEL3_RATE=0.01
+POINTS_PER_REFERRAL_DOCTOR=1000
+POINTS_PER_REFERRAL_CUSTOMER=1000
+SITE_BASE_URL=https://your-domain.com
+```
+
+**Never commit `.env` to git!** Use Netlify dashboard instead.
+
+#### **1.2 Connect Netlify**
+
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Link local project to Netlify site
+netlify link
+
+# Test build locally
+netlify build
+
+# Deploy preview
+netlify deploy --prod
+```
+
+---
+
+### **Phase 2: Netlify Configuration**
+
+#### **2.1 Update `netlify.toml`**
+
+```toml
+[build]
+  command = "npm run build:client && npm run build:server"
+  functions = "netlify/functions"
+  publish = "dist/spa"
+
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY"
+  NODE_VERSION = "20.11.0"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@supabase/supabase-js"]
+
+# API function proxy
+[[redirects]]
+  force = true
+  from = "/api/*"
+  status = 200
+  to = "/.netlify/functions/api/:splat"
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# Cache headers for static assets
+[[headers]]
+  for = "/*.(js|css|woff2|png|jpg|svg)"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# No cache for HTML
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+```
+
+#### **2.2 Environment Variables in Netlify Dashboard**
+
+1. Go to **Site Settings** > **Build & Deploy** > **Environment**
+2. Click **Edit variables**
+3. Add all `.env` variables (do NOT include `VITE_` prefix for server-side vars)
+4. Save and trigger rebuild
+
+```
+SUPABASE_URL: https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY: eyJhbGc...
+SHOPIFY_STORE_DOMAIN: your-store.myshopify.com
+SHOPIFY_ADMIN_ACCESS_TOKEN: shpat_...
+RAZORPAY_KEY_ID: rzp_live_...
+RAZORPAY_KEY_SECRET: your-secret-key
+[etc.]
+```
+
+---
+
+### **Phase 3: Database & Migrations**
+
+#### **3.1 Run Database Schema**
+
+1. Go to **Supabase Dashboard** > **SQL Editor**
+2. Create new query
+3. Copy entire SQL schema from README's `DATABASE SCHEMA` section
+4. Execute query
+5. Verify all tables created: `SELECT tablename FROM pg_tables WHERE schemaname='public';`
+
+#### **3.2 Set up RLS Policies**
+
+Already included in SQL schema. Verify:
+
+```bash
+# In Supabase SQL Editor
+SELECT * FROM pg_policies WHERE tablename = 'users';
+```
+
+#### **3.3 Create Storage Bucket**
+
+1. Go to **Supabase** > **Storage**
+2. Create bucket: `user-uploads`
+3. Set policy:
+   ```sql
+   CREATE POLICY "Authenticated users can upload"
+   ON storage.objects
+   FOR INSERT
+   WITH CHECK (auth.role() = 'authenticated');
+   ```
+
+---
+
+### **Phase 4: External Integrations**
+
+#### **4.1 Shopify Webhook Setup**
+
+1. Go to **Shopify Admin** > **Settings** > **Apps and integrations** > **Webhooks**
+2. Create webhook:
+   - **Event**: orders/create, orders/updated, orders/paid
+   - **URL**: `https://your-domain.com/api/webhooks/shopify`
+   - **API version**: 2024-10
+3. Copy webhook secret: `SHOPIFY_WEBHOOK_SECRET`
+4. Add to Netlify environment
+
+#### **4.2 Razorpay Webhook Setup** (Optional)
+
+1. Go to **Razorpay Dashboard** > **Settings** > **Webhooks**
+2. Create webhook:
+   - **URL**: `https://your-domain.com/api/webhooks/razorpay`
+   - **Events**: payment.authorized, payment.failed
+3. Test webhook delivery in Razorpay dashboard
+
+#### **4.3 Supabase Auth Configuration**
+
+1. Go to **Supabase** > **Authentication** > **Providers**
+2. Enable OAuth providers (Google, GitHub, etc.)
+3. Add redirect URLs:
+   - `https://your-domain.com/auth/callback`
+   - `http://localhost:8080/auth/callback` (dev)
+
+---
+
+### **Phase 5: SSL/HTTPS Configuration**
+
+#### **5.1 Custom Domain & Certificate**
+
+1. Go to **Netlify** > **Site Settings** > **Domain Management**
+2. Add custom domain: `your-domain.com`
+3. Netlify automatically provisions **Let's Encrypt SSL/TLS**
+4. Wait for DNS propagation (5-30 min)
+5. Verify certificate active in browser
+
+#### **5.2 HSTS & Security**
+
+Add to `netlify.toml`:
+
+```toml
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co https://api.razorpay.com https://*.myshopify.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:"
+```
+
+---
+
+### **Phase 6: Monitoring & Logging**
+
+#### **6.1 Netlify Analytics**
+
+1. Go to **Site Settings** > **Analytics**
+2. Enable **Netlify Analytics** (paid feature)
+3. Monitor:
+   - Page load times
+   - Traffic sources
+   - Error rates
+
+#### **6.2 Supabase Logging**
+
+1. **SQL Logs**: Supabase > **SQL Editor** > **Inspect** queries
+2. **Auth Logs**: Supabase > **Authentication** > **Auth Logs**
+3. **Database Activity**: Supabase > **Database** > **Query Performance**
+
+#### **6.3 Application Error Tracking**
+
+Add **Sentry** for error monitoring:
+
+```bash
+# Install Sentry
+npm install @sentry/react @sentry/tracing
+
+# Initialize in client/App.tsx
+import * as Sentry from "@sentry/react";
+
+Sentry.init({
+  dsn: "https://your-sentry-dsn@sentry.io/...",
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 0.1,
+});
+```
+
+#### **6.4 Server-side Logging**
+
+Add to `server/index.ts`:
+
+```typescript
+// Winston logger
+import winston from 'winston';
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple(),
+  }));
+}
+
+// Use in routes
+logger.info('Order created', { orderId, userId });
+logger.error('Payment failed', { error, orderId });
+```
+
+---
+
+### **Phase 7: CI/CD Pipeline (GitHub Actions)**
+
+#### **7.1 Create `.github/workflows/deploy.yml`**
+
+```yaml
+name: Deploy to Netlify
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10.14.0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10.14.0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - run: pnpm install
+
+      - run: pnpm build
+
+      - uses: netlify/actions/cli@master
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        with:
+          args: deploy --prod
+```
+
+#### **7.2 Setup GitHub Secrets**
+
+1. Go to **GitHub** > **Settings** > **Secrets and variables** > **Actions**
+2. Add:
+   - `NETLIFY_AUTH_TOKEN`: Get from Netlify > User Settings > Applications
+   - `NETLIFY_SITE_ID`: Get from Netlify > Site Settings > General
+
+#### **7.3 Database Migrations with Supabase**
+
+```yaml
+  - name: Run database migrations
+    run: |
+      npx supabase db push --db-url ${{ secrets.DATABASE_URL }}
+    env:
+      DATABASE_URL: postgresql://user:password@...
+```
+
+---
+
+### **Phase 8: Performance Optimization**
+
+#### **8.1 Build Optimization**
+
+```bash
+# Analyze bundle size
+npm run build
+npx webpack-bundle-analyzer dist/spa
+
+# Tree-shake unused code
+# Already enabled in vite.config.ts
+```
+
+#### **8.2 Image Optimization**
+
+```typescript
+// In components, use WebP + fallback
+<picture>
+  <source srcSet="image.webp" type="image/webp" />
+  <img src="image.png" alt="..." />
+</picture>
+```
+
+#### **8.3 Code Splitting**
+
+Already configured in `vite.config.ts` with dynamic imports:
+
+```typescript
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+```
+
+---
+
+### **Phase 9: Pre-Deployment Checklist**
+
+#### **Configuration**
+- [ ] All environment variables added to Netlify
+- [ ] `netlify.toml` configured with correct build command
+- [ ] Security headers set in `netlify.toml`
+- [ ] Cache headers configured properly
+
+#### **Database**
+- [ ] SQL schema executed in Supabase
+- [ ] RLS policies enabled
+- [ ] Storage bucket created (`user-uploads`)
+- [ ] Indexes created for performance
+- [ ] Backups configured in Supabase
+
+#### **Authentication**
+- [ ] Supabase Auth providers configured
+- [ ] OAuth redirect URLs added
+- [ ] Email templates customized (optional)
+- [ ] Password requirements set
+
+#### **External Services**
+- [ ] Shopify webhook configured and tested
+- [ ] Razorpay API keys verified (test mode → live mode)
+- [ ] Shopify products visible in API
+- [ ] Payment processing tested with test card
+
+#### **API Endpoints**
+- [ ] All routes respond correctly
+- [ ] Error handling in place
+- [ ] Request validation working
+- [ ] Signature verification (Shopify/Razorpay)
+
+#### **Frontend**
+- [ ] TypeScript strict mode enabled
+- [ ] All pages tested
+- [ ] Protected routes have guards
+- [ ] Navigation links working
+- [ ] Forms submit successfully
+
+#### **Security**
+- [ ] No secrets in code
+- [ ] `.env` files in `.gitignore`
+- [ ] CORS configured correctly
+- [ ] Input validation on all forms
+- [ ] SQL injection protection (using parameterized queries)
+
+#### **Monitoring**
+- [ ] Netlify Analytics enabled
+- [ ] Error tracking (Sentry) configured
+- [ ] Logging set up
+- [ ] Database query monitoring enabled
+
+#### **Performance**
+- [ ] Bundle size < 500KB (gzipped)
+- [ ] Lighthouse score > 80
+- [ ] API response time < 200ms
+- [ ] Database queries optimized
+
+#### **Testing**
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] End-to-end tests on staging
+- [ ] Payment flow tested with test credentials
+
+#### **DNS & Domain**
+- [ ] Custom domain added to Netlify
+- [ ] SSL certificate issued (green lock)
+- [ ] DNS records pointing to Netlify
+- [ ] Email forwarding configured (optional)
+
+#### **Documentation**
+- [ ] README complete
+- [ ] API documentation updated
+- [ ] Database schema documented
+- [ ] Deployment steps recorded
+
+---
+
+### **Phase 10: Post-Deployment**
+
+#### **10.1 Verify Deployment**
+
+```bash
+# Check site is live
+curl -I https://your-domain.com
+
+# Verify SSL
+openssl s_client -connect your-domain.com:443
+
+# Check API
+curl https://your-domain.com/api/ping
+```
+
+#### **10.2 Monitor Errors**
+
+```bash
+# Check Netlify logs
+netlify logs --tail
+
+# Check Supabase logs
+# Supabase Dashboard > Logs
+
+# Check Sentry
+# Sentry Dashboard > Issues
+```
+
+#### **10.3 Setup Alerts**
+
+1. **Netlify**: Site settings > Notifications > Slack/Email
+2. **Sentry**: Create alerts for production errors
+3. **Supabase**: Enable email on critical errors
+
+#### **10.4 Database Backups**
+
+```sql
+-- Supabase automatically backs up daily
+-- View backups: Supabase > Database > Backups
+-- Restore: Click "Restore" on backup point
+```
+
+#### **10.5 Update DNS Records**
+
+Once verified, update your DNS provider:
+
+```
+A Record: your-domain.com → Netlify IP
+CNAME: www.your-domain.com → your-netlify-domain.netlify.app
+TXT (optional): SPF/DKIM for email forwarding
+```
+
+---
+
+### **Phase 11: Scaling & Maintenance**
+
+#### **11.1 Database Scaling**
+
+- **Supabase**: Offers auto-scaling
+- Monitor: Supabase > Database > Query Performance
+- Increase reserved compute if needed
+
+#### **11.2 Function Optimization**
+
+- Netlify Functions execute in AWS Lambda (timeout: 26s)
+- For long tasks, queue with Bull/RabbitMQ
+- Monitor: Netlify > Analytics > Function execution time
+
+#### **11.3 Monthly Maintenance**
+
+```bash
+# Update dependencies
+npm update
+
+# Audit security vulnerabilities
+npm audit
+
+# Run tests
+npm test
+
+# Check bundle size
+npm run build && npx webpack-bundle-analyzer dist/spa
+```
+
+---
+
+### **Troubleshooting Deployment Issues**
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Functions timeout | Long-running logic | Use background jobs, cache results |
+| 404 on API calls | Route not registered | Check `netlify.toml` redirects |
+| CORS errors | Browser blocking requests | Add CORS headers in `server/index.ts` |
+| Database auth fails | Wrong service role key | Verify `SUPABASE_SERVICE_ROLE_KEY` |
+| Payments failing | Wrong API keys | Switch to live keys (not test) |
+| Webhook not firing | URL misconfigured | Test in Shopify/Razorpay dashboard |
+| SSL not working | DNS not pointing to Netlify | Wait 24h, force refresh DNS |
+
+---
+
 ## 📞 SUPPORT
 
 For questions on:
@@ -1358,3 +2031,5 @@ For questions on:
 - **APIs**: See `FUNCTION & API MAPPING` section
 - **Testing**: See `TESTING & DEBUGGING GUIDE` section
 - **External services**: See `EXTERNAL INTEGRATIONS` section
+- **Deployment**: See `DEPLOYMENT GUIDE (Netlify)` section
+- **Architecture**: See `ARCHITECTURE DIAGRAM` section
