@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { getUser, updateUser, User } from "@/lib/auth";
+import { UsersAPI, uploadImageAndGetUrl } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 export default function Profile() {
   const existing = getUser();
@@ -11,7 +13,17 @@ export default function Profile() {
     avatar: existing?.avatar,
   });
   const [saved, setSaved] = useState<string>("");
+  const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await UsersAPI.me();
+        setForm((f) => ({ ...f, name: me?.name ?? f.name, email: me?.email ?? f.email, clinic: me?.clinic ?? f.clinic, bio: me?.bio ?? f.bio, avatar: me?.avatar ?? f.avatar }));
+      } catch {}
+    })();
+  }, []);
 
   function onChange<K extends keyof User>(key: K, value: User[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -19,24 +31,35 @@ export default function Profile() {
 
   async function onFileSelected(file?: File) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const data = reader.result as string;
-      setForm((f) => ({ ...f, avatar: data }));
-    };
-    reader.readAsDataURL(file);
+    setLoading(true);
+    try {
+      const url = await uploadImageAndGetUrl(file);
+      setForm((f) => ({ ...f, avatar: url }));
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function onSave() {
-    updateUser({
-      name: form.name ?? existing?.name ?? "",
-      email: form.email ?? existing?.email ?? "",
-      clinic: form.clinic ?? existing?.clinic,
-      bio: form.bio ?? existing?.bio,
-      avatar: form.avatar ?? existing?.avatar,
-    });
-    setSaved("Saved!");
-    setTimeout(() => setSaved(""), 1500);
+  async function onSave() {
+    setLoading(true);
+    try {
+      const updated = await UsersAPI.updateMe({
+        name: form.name ?? existing?.name ?? "",
+        email: form.email ?? existing?.email ?? "",
+        clinic: form.clinic ?? existing?.clinic,
+        bio: form.bio ?? existing?.bio,
+        avatar: form.avatar ?? existing?.avatar,
+      });
+      updateUser({ ...existing, ...updated } as any);
+      setSaved("Saved!");
+      setTimeout(() => setSaved(""), 1500);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -71,12 +94,13 @@ export default function Profile() {
             className="hidden"
             onChange={(e) => onFileSelected(e.target.files?.[0])}
           />
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="mt-3 w-full rounded-md border px-3 py-2 text-sm hover:bg-muted"
-          >
-            Change Photo
-          </button>
+          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={loading}>
+            {loading ? (
+              <span className="inline-flex items-center gap-2"><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />Uploading…</span>
+            ) : (
+              "Change Photo"
+            )}
+          </Button>
         </div>
         <form
           onSubmit={(e) => {
@@ -122,12 +146,13 @@ export default function Profile() {
             />
           </div>
           <div className="flex items-center gap-3">
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
-            >
-              Save Changes
-            </button>
+            <Button type="submit" disabled={loading}>
+              {loading ? (
+                <span className="inline-flex items-center gap-2"><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />Saving…</span>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
             {saved && <span className="text-sm text-emerald-600">{saved}</span>}
           </div>
         </form>
