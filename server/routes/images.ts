@@ -73,4 +73,57 @@ router.get('/signed-url', async (req, res) => {
   }
 });
 
+// Proxy an image through the server to avoid client-side JWT signed-url verification issues
+router.get('/proxy', async (req, res) => {
+  try {
+    const { key, bucket } = req.query as { key?: string; bucket?: string };
+    if (!key) return res.status(400).json({ error: 'key required' });
+    const supabase = getServerSupabase();
+    const bucketName = bucket || process.env.SUPABASE_BUCKET || 'user-uploads';
+
+    const { data, error } = await supabase.storage.from(bucketName).download(String(key));
+    if (error) return res.status(500).json({ error });
+    if (!data) return res.status(404).end();
+
+    // Try to obtain bytes from different returned types
+    let buffer: Buffer | null = null;
+    try {
+      if (typeof (data as any).arrayBuffer === 'function') {
+        const ab = await (data as any).arrayBuffer();
+        buffer = Buffer.from(ab);
+      } else if (typeof (data as any).toBuffer === 'function') {
+        buffer = (data as any).toBuffer();
+      } else {
+        // Node stream / async iterable
+        const chunks: Buffer[] = [];
+        for await (const chunk of (data as any)) {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        }
+        buffer = Buffer.concat(chunks);
+      }
+    } catch (e) {
+      return res.status(500).json({ error: 'failed_to_read_object' });
+    }
+
+    // Simple content-type inference from file extension
+    const ext = String(key).split('.').pop()?.toLowerCase();
+    const mimeMap: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      avif: 'image/avif',
+    };
+    const contentType = mimeMap[ext ?? ''] || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(buffer);
+  } catch (err) {
+    return sendError(res, err, 500);
+  }
+});
+
 export default router;
