@@ -7,7 +7,13 @@ const router = Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { referral_code, email, phone } = req.body || {};
+    let body: unknown = req.body;
+    if (Buffer.isBuffer(body)) {
+      try { body = JSON.parse(body.toString('utf8')); } catch {}
+    } else if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    }
+    const { referral_code, email, phone } = (body || {}) as any;
     if (!referral_code) return res.status(400).json({ error: "referral_code required" });
     if (!email && !phone) return res.status(400).json({ error: "email or phone required" });
     if (email && phone) return res.status(400).json({ error: "provide exactly one of email or phone" });

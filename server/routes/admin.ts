@@ -16,7 +16,13 @@ router.use((req: any, res, next) => {
 // Create or upsert a super admin user (server-only)
 router.post('/create-super-admin', async (req, res) => {
   try {
-    const { email, name } = req.body;
+    let body: unknown = req.body;
+    if (Buffer.isBuffer(body)) {
+      try { body = JSON.parse(body.toString('utf8')); } catch {}
+    } else if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    }
+    const { email, name } = (body || {}) as any;
     if (!email) return res.status(400).json({ error: 'email required' });
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -85,6 +91,12 @@ router.get('/settings', async (_req, res) => {
 // Update settings (admin/super_admin)
 router.post('/settings', async (req, res) => {
   try {
+    let body: unknown = req.body;
+    if (Buffer.isBuffer(body)) {
+      try { body = JSON.parse(body.toString('utf8')); } catch {}
+    } else if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    }
     const supabase = getServerSupabase();
     const patch: Record<string, number> = {};
     const keys = [
@@ -93,7 +105,7 @@ router.post('/settings', async (req, res) => {
       'doctor_commission_min','doctor_commission_max',
     ] as const;
     keys.forEach((k) => {
-      const v = req.body?.[k];
+      const v = (body as any)?.[k];
       if (typeof v === 'number' && !Number.isNaN(v)) (patch as any)[k] = v;
     });
     const { data, error } = await supabase.from('settings').upsert({ id: 'global', ...patch }).select('*').maybeSingle();
@@ -107,8 +119,14 @@ router.post('/settings', async (req, res) => {
 // Change role (only super_admin should call)
 router.post('/users/:id/role', async (req, res) => {
   try {
+    let body: unknown = req.body;
+    if (Buffer.isBuffer(body)) {
+      try { body = JSON.parse(body.toString('utf8')); } catch {}
+    } else if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    }
     const { id } = req.params;
-    const { role } = req.body;
+    const { role } = (body || {}) as any;
     if (!['user', 'admin', 'super_admin'].includes(role)) return res.status(400).json({ error: 'invalid role' });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('users').update({ role }).eq('id', id).select('*');
