@@ -2,11 +2,13 @@ import { useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { Link } from "react-router-dom";
 import GoogleOneTapLogin from "@/components/GoogleOneTap";
+import { Button } from "@/components/ui/button";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,16 +17,20 @@ export default function Login() {
       setError("Auth not configured");
       return;
     }
+    setLoading(true);
     try {
       const cv = (supabase.auth as any).getCodeVerifier?.();
       if (cv) localStorage.setItem("supabase-code-verifier", cv);
-    } catch {}
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: "https://amiy.netlify.app/auth/callback" },
-    });
-    if (error) setError(error.message);
-    else setSent(true);
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectTo },
+      });
+      if (error) setError(error.message);
+      else setSent(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,12 +72,9 @@ export default function Login() {
                 />
               </div>
               {error && <div className="text-sm text-red-600">{error}</div>}
-              <button
-                type="submit"
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
-              >
+              <Button type="submit" className="w-full" loading={loading} disabled={loading}>
                 Send magic link
-              </button>
+              </Button>
             </form>
           </div>
         )}
