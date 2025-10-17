@@ -140,8 +140,9 @@ export async function uploadImageAndGetUrl(file: File): Promise<string> {
     userId = data.session?.user?.id ?? null;
   } catch {}
   await ImagesAPI.register({ user_id: userId, key, bucket });
-  const signed = await ImagesAPI.getSignedUrl(key, bucket);
-  return (signed as any)?.signedUrl || (signed as any)?.signedURL || (signed as any)?.url || '';
+  // Prefer same-origin proxy to avoid client-side signed token verification errors
+  // Return server proxy path which will stream the image from Supabase using the service key
+  return `/api/images/proxy?key=${encodeURIComponent(key)}${bucket ? `&bucket=${encodeURIComponent(bucket)}` : ''}`;
 }
 
 export const CheckoutAPI = {
