@@ -33,12 +33,22 @@ export async function requireAuth(
   next: NextFunction,
 ) {
   try {
+    // Try Authorization header, then cookies, then query param
+    let token: string | null = null;
     const header = req.headers.authorization ?? "";
-    const token = header.startsWith("Bearer ")
-      ? header.substring("Bearer ".length)
-      : null;
+    if (header && header.startsWith("Bearer ")) token = header.substring("Bearer ".length);
+
+    if (!token && typeof req.headers.cookie === 'string') {
+      const match = req.headers.cookie.split(';').map(s => s.trim()).find(s => s.startsWith('sb-access-token=') || s.startsWith('access_token='));
+      if (match) token = decodeURIComponent(match.split('=')[1] || '');
+    }
+
+    if (!token && (req as any).query && (req as any).query.access_token) {
+      token = String((req as any).query.access_token);
+    }
+
     if (!token) {
-      return res.status(401).json({ error: "Missing Authorization header" });
+      return res.status(401).json({ error: "Missing Authorization token" });
     }
 
     const { data, error } = await getAuthClient().auth.getUser(token);
