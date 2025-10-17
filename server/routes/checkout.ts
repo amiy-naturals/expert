@@ -32,7 +32,14 @@ router.post(
   requireAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const parsed = createOrderSchema.parse(req.body);
+      let body: unknown = req.body;
+      if (Buffer.isBuffer(body)) {
+        try { body = JSON.parse(body.toString('utf8')); } catch {}
+      } else if (typeof body === 'string') {
+        try { body = JSON.parse(body); } catch {}
+      }
+
+      const parsed = createOrderSchema.parse(body);
       const razorpay = getRazorpay();
       const receipt = `order_${Date.now()}`;
 
