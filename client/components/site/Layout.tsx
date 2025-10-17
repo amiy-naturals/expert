@@ -184,12 +184,18 @@ function MobileAuthActions({ onClose }: { onClose: () => void }) {
   if (!user) {
     return (
       <>
-        <div onClick={onClose} className="w-full">
-          <JoinCTA>Join as Amiy Expert</JoinCTA>
-        </div>
+        <button
+          onClick={() => {
+            onClose();
+            window.location.href = "/join";
+          }}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-md font-semibold"
+        >
+          Join as Amiy Expert
+        </button>
         <Link
           to="/login"
-          className="w-full inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          className="w-full inline-flex items-center justify-center rounded-md border px-6 py-3 font-semibold hover:bg-muted"
           onClick={onClose}
         >
           Sign in
@@ -202,15 +208,21 @@ function MobileAuthActions({ onClose }: { onClose: () => void }) {
       {showDashboard ? (
         <Link
           to="/dashboard"
-          className="w-full inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          className="w-full inline-flex items-center justify-center rounded-md border px-6 py-3 font-semibold hover:bg-muted"
           onClick={onClose}
         >
           Dashboard
         </Link>
       ) : (
-        <div onClick={onClose} className="w-full">
-          <JoinCTA>Join as Amiy Expert</JoinCTA>
-        </div>
+        <button
+          onClick={() => {
+            onClose();
+            window.location.href = "/join";
+          }}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-md font-semibold"
+        >
+          Join as Amiy Expert
+        </button>
       )}
       <button
         onClick={async () => {
@@ -221,7 +233,7 @@ function MobileAuthActions({ onClose }: { onClose: () => void }) {
           window.location.href = "/";
           onClose();
         }}
-        className="w-full inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+        className="w-full inline-flex items-center justify-center rounded-md border px-6 py-3 font-semibold hover:bg-muted"
       >
         Log out
       </button>
