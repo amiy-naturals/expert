@@ -25,6 +25,8 @@ function Header() {
     { label: "Amiy Army", to: "/army" },
     { label: "Compensation", to: "/compensation" },
   ];
+  const [isOpen, setIsOpen] = React.useState(false);
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-background/80">
       <div className="container mx-auto flex h-16 items-center justify-between">
@@ -51,6 +53,27 @@ function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <button className="inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted">
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:w-96">
+              <nav className="flex flex-col gap-4 mt-8">
+                {nav.map((i) => (
+                  <Link
+                    key={i.to}
+                    to={i.to}
+                    className="text-foreground/80 hover:text-foreground transition-colors py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {i.label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
           <AuthActions />
         </div>
       </div>
