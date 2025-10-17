@@ -23,10 +23,10 @@ export function createServer() {
 
   // Middleware
   app.use(cors());
-  // Shopify webhooks require raw body for HMAC verification
-  app.use('/api/webhooks/shopify', express.raw({ type: '*/*' }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  // Shopify webhooks require raw body for HMAC verification (must be AFTER general JSON parser)
+  app.use('/api/webhooks/shopify', express.raw({ type: '*/*' }));
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
