@@ -222,10 +222,21 @@ router.post(
       res.json({ success: true, shopifyOrderId: order.id, shopifyOrderName: order.name });
     } catch (err) {
       if (err instanceof ZodError) {
-        return res.status(400).json({ error: 'Validation failed', issues: err.issues, receivedBody: req.body });
+        return res.status(400).json({ error: 'Validation failed', issues: err.issues });
       }
-      const message = err instanceof Error ? err.message : String(err);
-      res.status(400).json({ error: message, receivedBody: req.body });
+      let message = 'Unknown error';
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err && typeof err === 'object') {
+        try {
+          message = JSON.stringify(err);
+        } catch {
+          message = String(err);
+        }
+      } else {
+        message = String(err);
+      }
+      res.status(400).json({ error: message });
     }
   },
 );
