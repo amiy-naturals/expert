@@ -60,6 +60,7 @@ function Header() {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:w-96">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <nav className="flex flex-col gap-4 mt-8">
                 {nav.map((i) => (
                   <Link
