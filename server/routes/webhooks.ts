@@ -4,6 +4,7 @@ import { getServerSupabase } from "../lib/supabase";
 import { pickOrderContact, resolveDoctorChain, isPostJoin } from "../lib/attribution";
 import { recordLockedPointsTransaction, recordPointsTransaction } from "../lib/loyalty";
 import { getConfig } from "../lib/env";
+import { sendError } from '../lib/error';
 
 const router = express.Router();
 
