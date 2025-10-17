@@ -102,9 +102,16 @@ export async function uploadImageAndGetUrl(file: File): Promise<string> {
   const { uploadUrl, key, bucket } = await ImagesAPI.requestUploadUrl(file.name);
   const res = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
   if (!res.ok) throw new Error('Upload failed');
-  await ImagesAPI.register({ user_id: (await getAccessToken()) ? undefined : undefined, key, bucket });
+  let userId: string | null = null;
+  try {
+    const { getSupabase } = await import('./supabase');
+    const supabase = getSupabase();
+    const { data } = await supabase.auth.getSession();
+    userId = data.session?.user?.id ?? null;
+  } catch {}
+  await ImagesAPI.register({ user_id: userId, key, bucket });
   const signed = await ImagesAPI.getSignedUrl(key, bucket);
-  return signed?.signedUrl || signed?.signedURL || signed?.url || '';
+  return (signed as any)?.signedUrl || (signed as any)?.signedURL || (signed as any)?.url || '';
 }
 
 export const CheckoutAPI = {
