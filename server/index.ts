@@ -56,5 +56,8 @@ export function createServer() {
   app.use('/api/webhooks', webhooksRouter);
   app.use('/api/users', usersRouter);
 
+  // Debug route to check Supabase access from the running server (admin only)
+  app.use('/api/debug/supabase', debugSupabaseRouter);
+
   return app;
 }
