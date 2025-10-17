@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
 import { getConfig } from "../lib/env";
 import { getServerSupabase } from "../lib/supabase";
+import { sendError } from '../lib/error';
 
 const router = Router();
 
