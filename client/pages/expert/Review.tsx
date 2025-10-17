@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 export default function ReviewStep() {
   const { cart, subscription, account, totals, reset } = useExpertCtx();
+  const [loading, setLoading] = useState(false);
 
   async function ensureRazorpayScript() {
     if ((window as any).Razorpay) return;
@@ -21,6 +22,7 @@ export default function ReviewStep() {
 
   async function submit() {
     try {
+      setLoading(true);
       if (!subscription.nextDate) throw new Error('Schedule your next order date');
       await ensureRazorpayScript();
       const order = await ExpertAPI.onboard({ cart, subscription: { nextDate: subscription.nextDate, frequency: subscription.frequency }, account });
@@ -45,6 +47,8 @@ export default function ReviewStep() {
       });
     } catch (e) {
       toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
     }
   }
 
