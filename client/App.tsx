@@ -49,7 +49,15 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import { useEffect } from "react";
 import supabase, { getSupabase } from "@/lib/supabase";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 // Initialize Supabase client early and process magic-link fragments (access_token / errors)
 const App = () => {

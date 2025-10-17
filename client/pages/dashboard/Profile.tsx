@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getUser, updateUser, User } from "@/lib/auth";
 import { UsersAPI, uploadImageAndGetUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";

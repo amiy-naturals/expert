@@ -16,11 +16,10 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
     throw new Error(`Network request failed: ${err?.message ?? String(err)}`);
   }
 
-  if (!res.ok) {
+  async function parseMessage(resp: Response) {
     let message = '';
     try {
-      const clone = res.clone();
-      // Try JSON parse first regardless of content-type
+      const clone = resp.clone();
       try {
         const json = await clone.json();
         if (json) {
@@ -33,7 +32,6 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
           }
         }
       } catch (e) {
-        // Not JSON, try text
         try {
           message = await clone.text();
         } catch {
@@ -41,11 +39,40 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
         }
       }
     } catch {
-      // Fallback if body is already consumed or unreadable
-      message = res.statusText || `HTTP ${res.status}`;
+      message = resp.statusText || `HTTP ${resp.status}`;
     }
-    // Enrich 401 message
-    if (!message && res.status === 401) message = 'Unauthorized (401): please sign in';
+    return message;
+  }
+
+  if (!res.ok) {
+    const message = await parseMessage(res);
+
+    // Permission denied (DB) — provide clearer message
+    if (/permission denied/i.test(message) || /42501/.test(message)) {
+      throw new Error('Server: database permission denied. Check server DB credentials and grants.');
+    }
+
+    // If unauthorized, try refresh and retry once
+    if (res.status === 401 && !(opts as any)._retried) {
+      const newToken = await getAccessToken();
+      if (newToken && newToken !== token) {
+        const newHeaders = new Headers(headers);
+        newHeaders.set('Authorization', `Bearer ${newToken}`);
+        const retryOpts = { ...(opts || {}), headers: newHeaders, credentials: 'same-origin' } as RequestInit & { _retried?: boolean };
+        (retryOpts as any)._retried = true;
+        const retryRes = await fetch(`/api${path}`, retryOpts);
+        if (retryRes.ok) return retryRes.json();
+        const retryMsg = await parseMessage(retryRes);
+        if (/permission denied/i.test(retryMsg) || /42501/.test(retryMsg)) {
+          throw new Error('Server: database permission denied. Check server DB credentials and grants.');
+        }
+        if (retryRes.status === 401) throw new Error('Unauthorized (401): please sign in');
+        throw new Error(retryMsg || retryRes.statusText || `HTTP ${retryRes.status}`);
+      }
+      throw new Error(message || 'Unauthorized (401): please sign in');
+    }
+
+    if (!message && res.status === 401) throw new Error('Unauthorized (401): please sign in');
     throw new Error(message || res.statusText || `HTTP ${res.status}`);
   }
   return res.json();
