@@ -43,6 +43,7 @@ export default function Debug() {
   };
 
   const endpoints: { label: string; page: string; action: () => Promise<void>; sample?: any }[] = [
+    { label: 'GET /api/debug/supabase/master', page: 'summary', action: () => call('/debug/supabase/master') },
     { label: '/api/ping', page: 'general', action: () => call('/ping') },
     { label: '/api/demo', page: 'general', action: () => call('/demo') },
 
