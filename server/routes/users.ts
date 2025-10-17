@@ -10,7 +10,7 @@ router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
       .from("users")
-      .select("id, email, name, avatar, avatar_approved, clinic, bio, role, license_number, license_url, photo_url")
+      .select("id, email, name, photo_url, avatar_approved, clinic, bio, role, license_number, license_url")
       .eq("id", req.authUser.id)
       .maybeSingle();
     if (error) throw error;
@@ -30,7 +30,7 @@ router.put("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     } catch {}
 
     const patch: Record<string, any> = {};
-    const allowed = ["name", "email", "clinic", "bio", "avatar"]; // whitelist
+    const allowed = ["name", "email", "clinic", "bio", "photo_url"]; // whitelist
     for (const k of allowed) if (body?.[k] !== undefined) patch[k] = body[k];
     if (Object.keys(patch).length === 0) return res.json({ updated: 0 });
 
@@ -39,7 +39,7 @@ router.put("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
       .from("users")
       .update(patch)
       .eq("id", req.authUser.id)
-      .select("id, email, name, avatar, avatar_approved, clinic, bio, role")
+      .select("id, email, name, photo_url, avatar_approved, clinic, bio, role")
       .maybeSingle();
     if (error) throw error;
     res.json(data);
