@@ -7,7 +7,13 @@ const router = Router();
 // Body: { user_id, rating, title, body, review_type?: 'product'|'doctor', target_user_id?: string }
 router.post('/', async (req, res) => {
   try {
-    const { user_id, rating, title, body, review_type, target_user_id } = req.body;
+    let reqBody: unknown = req.body;
+    if (Buffer.isBuffer(reqBody)) {
+      try { reqBody = JSON.parse(reqBody.toString('utf8')); } catch {}
+    } else if (typeof reqBody === 'string') {
+      try { reqBody = JSON.parse(reqBody); } catch {}
+    }
+    const { user_id, rating, title, body, review_type, target_user_id } = (reqBody || {}) as any;
     if (!user_id || !rating) return res.status(400).json({ error: 'user_id and rating required' });
     const supabase = getServerSupabase();
     // verify avatar approved

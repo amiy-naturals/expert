@@ -7,7 +7,13 @@ const router = Router();
 // Request a signed upload URL (server generates key and signed URL)
 router.post('/upload-url', async (req, res) => {
   try {
-    const { filename } = req.body;
+    let body: unknown = req.body;
+    if (Buffer.isBuffer(body)) {
+      try { body = JSON.parse(body.toString('utf8')); } catch {}
+    } else if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    }
+    const { filename } = (body || {}) as any;
     if (!filename) return res.status(400).json({ error: 'filename required' });
     const supabase = getServerSupabase();
     const bucket = process.env.SUPABASE_BUCKET || 'user-uploads';
@@ -24,7 +30,13 @@ router.post('/upload-url', async (req, res) => {
 // After upload, store metadata
 router.post('/', async (req, res) => {
   try {
-    const { user_id, key, bucket } = req.body;
+    let body: unknown = req.body;
+    if (Buffer.isBuffer(body)) {
+      try { body = JSON.parse(body.toString('utf8')); } catch {}
+    } else if (typeof body === 'string') {
+      try { body = JSON.parse(body); } catch {}
+    }
+    const { user_id, key, bucket } = (body || {}) as any;
     if (!user_id || !key || !bucket) return res.status(400).json({ error: 'user_id, key, bucket required' });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('images').insert([{ user_id, key, bucket }]).select('*');
