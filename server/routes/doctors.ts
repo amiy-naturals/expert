@@ -48,7 +48,7 @@ router.post('/invite', requireAuth, async (req: AuthenticatedRequest, res) => {
     const joinUrl = `${base}${joinPath}`;
     res.json({ token, joinPath, joinUrl, expiresAt });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -141,7 +141,7 @@ router.post('/accept-invite', async (req, res) => {
     const referralLink = `${base}/?ref=${encodeURIComponent(myRef)}`;
     res.json({ success: true, referralLink, bonus, locked: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -173,7 +173,7 @@ router.post('/apply', requireAuth, async (req: AuthenticatedRequest, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -191,7 +191,7 @@ router.get('/me/application', requireAuth, async (req: AuthenticatedRequest, res
     if (error && error.code !== 'PGRST116') return res.status(500).json({ error });
     res.json(data ?? null);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -206,7 +206,7 @@ router.get('/admin/applications', async (_req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -262,7 +262,7 @@ router.post('/admin/applications/:id/approve', async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -286,7 +286,7 @@ router.post('/admin/applications/:id/reject', async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
