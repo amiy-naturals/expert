@@ -190,9 +190,17 @@ function Footer() {
         </div>
       </div>
       <div className="border-t py-4">
-        <div className="container mx-auto flex items-center justify-between text-xs text-muted-foreground">
+        <div className="container mx-auto flex items-center justify-between text-xs text-muted-foreground gap-4">
           <span>© {new Date().getFullYear()} Amiy Naturals</span>
-          <span>Vijaya therapy compliant. Ethical practice only.</span>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy-policy" className="hover:underline">
+              Privacy Policy
+            </Link>
+            <Link to="/terms-and-conditions" className="hover:underline">
+              Terms & Conditions
+            </Link>
+            <span>Vijaya therapy compliant. Ethical practice only.</span>
+          </div>
         </div>
       </div>
     </footer>
