@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getServerSupabase } from '../lib/supabase';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
