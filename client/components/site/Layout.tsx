@@ -3,6 +3,8 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { getUser, clearUser } from "@/lib/auth";
 import { signOut } from "@/lib/supabase";
 import JoinCTA from "@/components/site/JoinCTA";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 export default function Layout() {
   const location = useLocation();
@@ -23,6 +25,8 @@ function Header() {
     { label: "Amiy Army", to: "/army" },
     { label: "Compensation", to: "/compensation" },
   ];
+  const [isOpen, setIsOpen] = React.useState(false);
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-background/80">
       <div className="container mx-auto flex h-16 items-center justify-between">
@@ -49,7 +53,34 @@ function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <AuthActions />
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <button className="inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted">
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:w-96">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <nav className="flex flex-col gap-4 mt-8">
+                {nav.map((i) => (
+                  <Link
+                    key={i.to}
+                    to={i.to}
+                    className="text-foreground/80 hover:text-foreground transition-colors py-2 text-base"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {i.label}
+                  </Link>
+                ))}
+                <div className="border-t my-4 pt-4 flex flex-col gap-3">
+                  <MobileAuthActions onClose={() => setIsOpen(false)} />
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <div className="hidden md:flex items-center gap-2">
+            <AuthActions />
+          </div>
         </div>
       </div>
     </header>
@@ -131,6 +162,86 @@ function AuthActions() {
   );
 }
 
+function MobileAuthActions({ onClose }: { onClose: () => void }) {
+  const user = getUser();
+  const [showDashboard, setShowDashboard] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      try {
+        const res = await (await import("@/lib/api")).ExpertAPI.me();
+        if (!cancelled) setShowDashboard(!!res.onboarded);
+      } catch {
+        if (!cancelled) setShowDashboard(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  if (!user) {
+    return (
+      <>
+        <button
+          onClick={() => {
+            onClose();
+            window.location.href = "/join";
+          }}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-md font-semibold"
+        >
+          Join as Amiy Expert
+        </button>
+        <Link
+          to="/login"
+          className="w-full inline-flex items-center justify-center rounded-md border px-6 py-3 font-semibold hover:bg-muted"
+          onClick={onClose}
+        >
+          Sign in
+        </Link>
+      </>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {showDashboard ? (
+        <Link
+          to="/dashboard"
+          className="w-full inline-flex items-center justify-center rounded-md border px-6 py-3 font-semibold hover:bg-muted"
+          onClick={onClose}
+        >
+          Dashboard
+        </Link>
+      ) : (
+        <button
+          onClick={() => {
+            onClose();
+            window.location.href = "/join";
+          }}
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-md font-semibold"
+        >
+          Join as Amiy Expert
+        </button>
+      )}
+      <button
+        onClick={async () => {
+          try {
+            await signOut();
+          } catch {}
+          clearUser();
+          window.location.href = "/";
+          onClose();
+        }}
+        className="w-full inline-flex items-center justify-center rounded-md border px-6 py-3 font-semibold hover:bg-muted"
+      >
+        Log out
+      </button>
+    </div>
+  );
+}
+
 function Footer() {
   return (
     <footer className="border-t bg-white/60 dark:bg-background/80">
@@ -190,9 +301,17 @@ function Footer() {
         </div>
       </div>
       <div className="border-t py-4">
-        <div className="container mx-auto flex items-center justify-between text-xs text-muted-foreground">
+        <div className="container mx-auto flex items-center justify-between text-xs text-muted-foreground gap-4">
           <span>© {new Date().getFullYear()} Amiy Naturals</span>
-          <span>Vijaya therapy compliant. Ethical practice only.</span>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy-policy" className="hover:underline">
+              Privacy Policy
+            </Link>
+            <Link to="/terms-and-conditions" className="hover:underline">
+              Terms & Conditions
+            </Link>
+            <span>Vijaya therapy compliant. Ethical practice only.</span>
+          </div>
         </div>
       </div>
     </footer>
