@@ -5,6 +5,7 @@ import { requireAuth, type AuthenticatedRequest } from '../middleware/auth';
 import { awardDoctorReferralBonus, recordLockedPointsTransaction, recordPointsTransaction } from '../lib/loyalty';
 import { ensureReferralRecord } from '../lib/referrals';
 import { getConfig } from '../lib/env';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
