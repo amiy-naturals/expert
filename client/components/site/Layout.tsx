@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { getUser, clearUser } from "@/lib/auth";
 import { signOut } from "@/lib/supabase";
 import JoinCTA from "@/components/site/JoinCTA";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
 export default function Layout() {
