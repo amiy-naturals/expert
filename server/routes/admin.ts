@@ -6,6 +6,27 @@ import { sendError } from '../lib/error';
 
 const router = Router();
 
+/**
+ * Admin Routes Documentation
+ *
+ * ROLE HIERARCHY:
+ * - user: Regular user
+ * - doctor: Verified healthcare professional (can post reviews/consults)
+ * - admin: Can approve avatars, reviews, and manage users
+ * - super_admin: Full permissions including creating admins and super_admins
+ *
+ * IMAGE & LICENSE VERIFICATION WORKFLOW:
+ * 1. Users upload avatar image (validated: jpg, jpeg, png, webp)
+ * 2. Users upload license (validated: pdf only)
+ * 3. Admins review in /admin/users endpoint (avatar_approved, license_verified flags)
+ * 4. Super admin can set verification status via /admin/users/:id/verify endpoints
+ * 5. Once approved, users can post reviews/become verified doctors
+ *
+ * SUPER ADMIN CREATION:
+ * - Only existing super_admin can create new super_admins via POST /create-super-admin
+ * - Automatically sets avatar_approved=true for administrative access
+ */
+
 // Require auth for all admin routes and ensure role is admin/super_admin
 router.use((req, res, next) => requireAuth(req as any, res as any, next));
 router.use((req: any, res, next) => {
@@ -144,6 +165,45 @@ router.post('/users/:id/approve-avatar', async (req, res) => {
     const { id } = req.params;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('users').update({ avatar_approved: true }).eq('id', id).select('*');
+    if (error) return res.status(500).json({ error });
+    res.json(data[0]);
+  } catch (err) {
+    return sendError(res, err, 500);
+  }
+});
+
+// Verify license for a user (admin or super_admin)
+router.post('/users/:id/verify-license', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('users').update({ license_verified: true }).eq('id', id).select('*');
+    if (error) return res.status(500).json({ error });
+    res.json(data[0]);
+  } catch (err) {
+    return sendError(res, err, 500);
+  }
+});
+
+// Reject avatar for a user (admin or super_admin)
+router.post('/users/:id/reject-avatar', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('users').update({ avatar_approved: false }).eq('id', id).select('*');
+    if (error) return res.status(500).json({ error });
+    res.json(data[0]);
+  } catch (err) {
+    return sendError(res, err, 500);
+  }
+});
+
+// Reject license for a user (admin or super_admin)
+router.post('/users/:id/reject-license', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('users').update({ license_verified: false }).eq('id', id).select('*');
     if (error) return res.status(500).json({ error });
     res.json(data[0]);
   } catch (err) {

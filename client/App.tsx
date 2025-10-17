@@ -38,11 +38,13 @@ import ReviewStep from "./pages/expert/Review";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
+import SuperAdminPanel from "./pages/admin/SuperAdmin";
 import Buy from "./pages/Buy";
 import AdminSettings from "./pages/admin/Settings";
 import LeaderboardPage from "./pages/Leaderboard";
 import AdminApplications from "./pages/admin/Applications";
 import AdminReviewsPage from "./pages/admin/Reviews";
+import DoctorApplication from "./pages/DoctorApplication";
 import Debug from "./pages/Debug";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsAndConditions from "./pages/TermsAndConditions";
@@ -186,7 +188,9 @@ const App = () => {
                 <Route path="applications" element={<AdminApplications />} />
                 <Route path="reviews" element={<AdminReviewsPage />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="super-admin" element={<SuperAdminPanel />} />
               </Route>
+              <Route path="doctor-application" element={<ProtectedOutlet><DoctorApplication /></ProtectedOutlet>} />
               <Route path="debug" element={<Debug />} />
               <Route path="privacy-policy" element={<PrivacyPolicy />} />
               <Route path="terms-and-conditions" element={<TermsAndConditions />} />
