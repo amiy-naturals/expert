@@ -34,6 +34,7 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
           .in("referrer_id", level2Ids)
       : { data: [], error: null } as const;
     if (level3.error) throw level3.error;
+    const level3Ids = (level3.data ?? []).map((r: any) => r.referred?.id).filter(Boolean);
 
     async function enrich(ids: string[]) {
       if (!ids.length) return {} as Record<string, { orders: number; points: number }>;
