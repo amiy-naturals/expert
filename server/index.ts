@@ -18,6 +18,7 @@ import expertRouter from "./routes/expert";
 import authRouter from "./routes/auth";
 import enrollRouter from "./routes/enroll";
 import webhooksRouter from "./routes/webhooks";
+import debugSupabaseRouter from "./routes/debug-supabase";
 
 export function createServer() {
   const app = express();
