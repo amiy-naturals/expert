@@ -92,6 +92,28 @@ export const ImagesAPI = {
   getSignedUrl: (key: string, bucket?: string) => apiFetch(`/images/signed-url?key=${encodeURIComponent(key)}${bucket ? `&bucket=${encodeURIComponent(bucket)}` : ''}`),
 };
 
+export const UsersAPI = {
+  me: () => apiFetch('/users/me'),
+  updateMe: (patch: Partial<{ name: string; email: string; clinic: string; bio: string; avatar: string }>) =>
+    apiFetch('/users/me', { method: 'PUT', body: JSON.stringify(patch) }),
+};
+
+export async function uploadImageAndGetUrl(file: File): Promise<string> {
+  const { uploadUrl, key, bucket } = await ImagesAPI.requestUploadUrl(file.name);
+  const res = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+  if (!res.ok) throw new Error('Upload failed');
+  let userId: string | null = null;
+  try {
+    const { getSupabase } = await import('./supabase');
+    const supabase = getSupabase();
+    const { data } = await supabase.auth.getSession();
+    userId = data.session?.user?.id ?? null;
+  } catch {}
+  await ImagesAPI.register({ user_id: userId, key, bucket });
+  const signed = await ImagesAPI.getSignedUrl(key, bucket);
+  return (signed as any)?.signedUrl || (signed as any)?.signedURL || (signed as any)?.url || '';
+}
+
 export const CheckoutAPI = {
   create: (payload: { amount: number; currency?: string; lineItems: { variantId: number; quantity: number; price?: number }[]; notes?: Record<string, string>; subscriptionId?: string; metadata?: Record<string, unknown>; redeemedPoints?: number }) =>
     apiFetch('/checkout/create', { method: 'POST', body: JSON.stringify(payload) }) as Promise<{ orderId: string; razorpayOrderId: string; amount: number; currency: string; razorpayKey: string }>,

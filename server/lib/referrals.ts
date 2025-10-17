@@ -113,7 +113,7 @@ export async function listDirectReferrals(userId: string) {
   const { data, error } = await supabase
     .from("referrals")
     .select(
-      "referred:users(id, name, email, role, created_at), type, milestone_awarded, created_at",
+      "referred:users!referrals_referred_id_fkey(id, name, email, role, created_at), type, milestone_awarded, created_at",
     )
     .eq("referrer_id", userId)
     .order("created_at", { ascending: false });

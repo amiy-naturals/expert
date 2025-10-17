@@ -11,6 +11,7 @@ import ordersRouter from "./routes/orders";
 import loyaltyRouter from "./routes/loyalty";
 import referralsRouter from "./routes/referrals";
 import leaderboardRouter from "./routes/leaderboard";
+import usersRouter from "./routes/users";
 import doctorsRouter from "./routes/doctors";
 import rankRouter from "./routes/rank";
 import expertRouter from "./routes/expert";
@@ -52,6 +53,7 @@ export function createServer() {
   app.use('/api/auth', authRouter);
   app.use('/api/enroll', enrollRouter);
   app.use('/api/webhooks', webhooksRouter);
+  app.use('/api/users', usersRouter);
 
   return app;
 }

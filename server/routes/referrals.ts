@@ -13,7 +13,7 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
 
     const level1 = await supabase
       .from("referrals")
-      .select("referred:users(id, name, email, role)")
+      .select("referred:users!referrals_referred_id_fkey(id, name, email, role)")
       .eq("referrer_id", userId);
     if (level1.error) throw level1.error;
     const level1Ids = (level1.data ?? []).map((r: any) => r.referred?.id).filter(Boolean);
@@ -21,7 +21,7 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
     const level2 = level1Ids.length
       ? await supabase
           .from("referrals")
-          .select("referred:users(id, name, email, role)")
+          .select("referred:users!referrals_referred_id_fkey(id, name, email, role)")
           .in("referrer_id", level1Ids)
       : { data: [], error: null } as const;
     if (level2.error) throw level2.error;
@@ -30,7 +30,7 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
     const level3 = level2Ids.length
       ? await supabase
           .from("referrals")
-          .select("referred:users(id, name, email, role)")
+          .select("referred:users!referrals_referred_id_fkey(id, name, email, role)")
           .in("referrer_id", level2Ids)
       : { data: [], error: null } as const;
     if (level3.error) throw level3.error;

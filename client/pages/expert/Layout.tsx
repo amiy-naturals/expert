@@ -100,6 +100,16 @@ function Guard() {
 }
 
 export default function ExpertLayout() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    (async () => {
+      try {
+        const { ExpertAPI } = await import("@/lib/api");
+        const me = await ExpertAPI.me();
+        if (me.onboarded) navigate('/dashboard', { replace: true });
+      } catch {}
+    })();
+  }, [navigate]);
   return (
     <ExpertProvider>
       <Stepper />
