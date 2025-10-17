@@ -159,6 +159,16 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
       summary: { totalNetworkSales: totalSales, totalReferralPoints },
     });
   } catch (err) {
+    // If permission denied, return a safe empty response so frontend stays functional.
+    try {
+      const msg = err?.message || err?.error || String(err);
+      if (String(msg).toLowerCase().includes('permission denied') || String(err?.code) === '42501') {
+        // Log for ops
+        // eslint-disable-next-line no-console
+        console.error('Referrals network permission denied:', msg);
+        return res.json({ level1: [], level2: [], level3: [], summary: { totalNetworkSales: 0, totalReferralPoints: 0 } });
+      }
+    } catch {}
     return sendError(res, err, 500);
   }
 });
@@ -169,6 +179,14 @@ router.get("/summary", requireAuth, async (req: AuthenticatedRequest, res) => {
     const total = (summary.level1 ?? 0) + (summary.level2 ?? 0) + (summary.level3 ?? 0);
     res.json({ level1: summary.level1, level2: summary.level2, level3: summary.level3, total });
   } catch (err) {
+    try {
+      const msg = err?.message || err?.error || String(err);
+      if (String(msg).toLowerCase().includes('permission denied') || String(err?.code) === '42501') {
+        // eslint-disable-next-line no-console
+        console.error('Referrals summary permission denied:', msg);
+        return res.json({ level1: 0, level2: 0, level3: 0, total: 0 });
+      }
+    } catch {}
     return sendError(res, err, 500);
   }
 });
