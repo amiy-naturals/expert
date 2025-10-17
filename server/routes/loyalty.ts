@@ -35,8 +35,7 @@ router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     if (txErr) throw txErr;
     res.json({ balance: Number(userRow?.points_balance ?? 0), transactions: txs ?? [] });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 });
 
