@@ -65,16 +65,21 @@ function Header() {
                   <Link
                     key={i.to}
                     to={i.to}
-                    className="text-foreground/80 hover:text-foreground transition-colors py-2"
+                    className="text-foreground/80 hover:text-foreground transition-colors py-2 text-base"
                     onClick={() => setIsOpen(false)}
                   >
                     {i.label}
                   </Link>
                 ))}
+                <div className="border-t my-4 pt-4 flex flex-col gap-3">
+                  <MobileAuthActions onClose={() => setIsOpen(false)} />
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
-          <AuthActions />
+          <div className="hidden md:flex items-center gap-2">
+            <AuthActions />
+          </div>
         </div>
       </div>
     </header>
