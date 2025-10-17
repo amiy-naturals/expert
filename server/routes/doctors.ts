@@ -148,7 +148,14 @@ router.post('/accept-invite', async (req, res) => {
 // Submit doctor application
 router.post('/apply', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    const { license_number, license_url, photo_url } = req.body || {};
+    // Normalize body (handle raw buffer or string bodies)
+    let requestBody: any = req.body;
+    if (Buffer.isBuffer(requestBody)) {
+      try { requestBody = JSON.parse(requestBody.toString('utf8')); } catch {}
+    } else if (typeof requestBody === 'string') {
+      try { requestBody = JSON.parse(requestBody); } catch {}
+    }
+    const { license_number, license_url, photo_url } = requestBody || {};
     if (!license_number || !license_url || !photo_url) {
       return res.status(400).json({ error: 'license_number, license_url, photo_url required' });
     }
