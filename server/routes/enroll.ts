@@ -53,7 +53,7 @@ router.post("/", async (req, res) => {
 
     res.json({ ok: true, redirect: "/" });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
