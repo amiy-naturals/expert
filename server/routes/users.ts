@@ -14,7 +14,8 @@ router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
       .eq("id", req.authUser.id)
       .maybeSingle();
     if (error) throw error;
-    res.json(data ?? null);
+    const out = data ? { ...data, avatar: (data as any).photo_url ?? null } : null;
+    res.json(out ?? null);
   } catch (err) {
     return sendError(res, err, 500);
   }
@@ -30,7 +31,10 @@ router.put("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     } catch {}
 
     const patch: Record<string, any> = {};
-    const allowed = ["name", "email", "clinic", "bio", "photo_url"]; // whitelist
+    // Accept either avatar (client legacy) or photo_url
+    if (body?.avatar !== undefined) patch.photo_url = body.avatar;
+    if (body?.photo_url !== undefined) patch.photo_url = body.photo_url;
+    const allowed = ["name", "email", "clinic", "bio"];
     for (const k of allowed) if (body?.[k] !== undefined) patch[k] = body[k];
     if (Object.keys(patch).length === 0) return res.json({ updated: 0 });
 
@@ -42,7 +46,8 @@ router.put("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
       .select("id, email, name, photo_url, avatar_approved, clinic, bio, role")
       .maybeSingle();
     if (error) throw error;
-    res.json(data);
+    const out = data ? { ...data, avatar: (data as any).photo_url ?? null } : null;
+    res.json(out);
   } catch (err) {
     return sendError(res, err, 500);
   }
