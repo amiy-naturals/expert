@@ -81,7 +81,7 @@ export default function ReviewStep() {
           <Button asChild variant="outline">
             <Link to="/expert/account">Back</Link>
           </Button>
-          <Button onClick={submit}>Submit</Button>
+          <Button onClick={submit} loading={loading} disabled={loading}>Submit</Button>
         </div>
       </div>
     </div>
