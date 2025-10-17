@@ -1,11 +1,45 @@
 import { Outlet, Link } from 'react-router-dom';
-import { getUser } from '@/lib/auth';
+import { useEffect } from 'react';
+import { useAuthUser, updateUser } from '@/lib/auth';
+import { UsersAPI } from '@/lib/api';
 
 export default function AdminLayout() {
-  const user = getUser();
+  const user = useAuthUser();
+
+  // If logged-in but missing role, fetch it from server
+  useEffect(() => {
+    (async () => {
+      if (user && !user.role) {
+        try {
+          const me = await UsersAPI.me();
+          if (me) {
+            updateUser({
+              role: me.role,
+              avatar: (me as any).avatar ?? (me as any).photo_url,
+              avatar_approved: (me as any).avatar_approved,
+              clinic: (me as any).clinic,
+              bio: (me as any).bio,
+              name: me.name ?? user.name,
+              email: me.email ?? user.email,
+            });
+          }
+        } catch {}
+      }
+    })();
+  }, [user?.id]);
+
   const isSuper = user?.role === 'super_admin';
 
-  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8">
+        <h2>Loading…</h2>
+        <p>Please wait.</p>
+      </div>
+    );
+  }
+
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
     return (
       <div className="container mx-auto py-8">
         <h2>Access denied</h2>
