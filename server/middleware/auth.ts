@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { NextFunction, Request, Response } from "express";
 import { createClient, type User } from "@supabase/supabase-js";
+import { sendError } from '../lib/error';
 import { getConfig } from "../lib/env";
 import { getServerSupabase } from "../lib/supabase";
 
@@ -94,6 +95,6 @@ export async function requireAuth(
     } else {
       message = String(err);
     }
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 }

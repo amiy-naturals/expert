@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getServerSupabase } from '../lib/supabase';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.post('/', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data[0]);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -58,7 +59,7 @@ router.get('/', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 

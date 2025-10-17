@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth';
 import { computeRank, getDoctorStats, RANK_ORDER, type RankKey } from '../lib/rank';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get('/me', requireAuth, async (req: AuthenticatedRequest, res) => {
     const progress = progressToward(current, stats);
     res.json({ rank: current, stats, progress });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -24,7 +25,7 @@ router.get('/:userId', async (req, res) => {
     const progress = progressToward(current, stats);
     res.json({ rank: current, stats, progress });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
