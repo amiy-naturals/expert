@@ -161,6 +161,74 @@ function AuthActions() {
   );
 }
 
+function MobileAuthActions({ onClose }: { onClose: () => void }) {
+  const user = getUser();
+  const [showDashboard, setShowDashboard] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      try {
+        const res = await (await import("@/lib/api")).ExpertAPI.me();
+        if (!cancelled) setShowDashboard(!!res.onboarded);
+      } catch {
+        if (!cancelled) setShowDashboard(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  if (!user) {
+    return (
+      <>
+        <div onClick={onClose} className="w-full">
+          <JoinCTA>Join as Amiy Expert</JoinCTA>
+        </div>
+        <Link
+          to="/login"
+          className="w-full inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          onClick={onClose}
+        >
+          Sign in
+        </Link>
+      </>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {showDashboard ? (
+        <Link
+          to="/dashboard"
+          className="w-full inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          onClick={onClose}
+        >
+          Dashboard
+        </Link>
+      ) : (
+        <div onClick={onClose} className="w-full">
+          <JoinCTA>Join as Amiy Expert</JoinCTA>
+        </div>
+      )}
+      <button
+        onClick={async () => {
+          try {
+            await signOut();
+          } catch {}
+          clearUser();
+          window.location.href = "/";
+          onClose();
+        }}
+        className="w-full inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+      >
+        Log out
+      </button>
+    </div>
+  );
+}
+
 function Footer() {
   return (
     <footer className="border-t bg-white/60 dark:bg-background/80">
