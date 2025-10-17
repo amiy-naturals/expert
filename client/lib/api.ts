@@ -20,8 +20,8 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
     let message = '';
     try {
       const clone = res.clone();
-      const ct = clone.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
+      // Try JSON parse first regardless of content-type
+      try {
         const json = await clone.json();
         if (json) {
           if (json.error) {
@@ -31,16 +31,21 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
           } else {
             message = JSON.stringify(json);
           }
-        } else {
+        }
+      } catch (e) {
+        // Not JSON, try text
+        try {
+          message = await clone.text();
+        } catch {
           message = '';
         }
-      } else {
-        message = await clone.text();
       }
     } catch {
       // Fallback if body is already consumed or unreadable
       message = res.statusText || `HTTP ${res.status}`;
     }
+    // Enrich 401 message
+    if (!message && res.status === 401) message = 'Unauthorized (401): please sign in';
     throw new Error(message || res.statusText || `HTTP ${res.status}`);
   }
   return res.json();
