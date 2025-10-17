@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getServerSupabase } from '../lib/supabase';
 import { getConfig } from '../lib/env';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.post('/create-super-admin', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data[0]);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -44,7 +45,7 @@ router.get('/users', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -62,7 +63,7 @@ router.get('/metrics', async (req, res) => {
       .reduce((s: number, v: number) => s + v, 0);
     res.json({ usersCount: usersCount ?? 0, earnings });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -84,7 +85,7 @@ router.get('/settings', async (_req, res) => {
     };
     res.json(payload);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -112,7 +113,7 @@ router.post('/settings', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -133,7 +134,7 @@ router.post('/users/:id/role', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data[0]);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -146,7 +147,7 @@ router.post('/users/:id/approve-avatar', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data[0]);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -164,7 +165,7 @@ router.post('/reviews/:id/approve', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -177,7 +178,7 @@ router.delete('/users/:id', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 

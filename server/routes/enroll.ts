@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getServerSupabase } from "../lib/supabase";
 import { normalizeEmail, normalizePhoneE164 } from "../lib/contacts";
 import { resolveDoctorByReferralCode } from "../lib/attribution";
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -52,7 +53,7 @@ router.post("/", async (req, res) => {
 
     res.json({ ok: true, redirect: "/" });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 

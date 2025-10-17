@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getServerSupabase } from '../lib/supabase';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.get('/', async (req, res) => {
     if (error) return res.status(500).json({ error });
     res.json({ week_start: weekStart, category, entries: data ?? [] });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 

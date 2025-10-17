@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
 import { getConfig } from "../lib/env";
 import { getServerSupabase } from "../lib/supabase";
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -34,8 +35,7 @@ router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     if (txErr) throw txErr;
     res.json({ balance: Number(userRow?.points_balance ?? 0), transactions: txs ?? [] });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 });
 

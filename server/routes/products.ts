@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getProductByHandle, listProducts } from "../lib/shopify";
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -75,8 +76,7 @@ router.get("/", async (req, res) => {
 
     res.json(response);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 });
 
@@ -115,8 +115,7 @@ router.get("/:handle", async (req, res) => {
     };
     res.json(payload);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 });
 

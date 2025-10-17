@@ -5,6 +5,7 @@ import { requireAuth, type AuthenticatedRequest } from '../middleware/auth';
 import { awardDoctorReferralBonus, recordLockedPointsTransaction, recordPointsTransaction } from '../lib/loyalty';
 import { ensureReferralRecord } from '../lib/referrals';
 import { getConfig } from '../lib/env';
+import { sendError } from '../lib/error';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.post('/invite', requireAuth, async (req: AuthenticatedRequest, res) => {
     const joinUrl = `${base}${joinPath}`;
     res.json({ token, joinPath, joinUrl, expiresAt });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -140,14 +141,21 @@ router.post('/accept-invite', async (req, res) => {
     const referralLink = `${base}/?ref=${encodeURIComponent(myRef)}`;
     res.json({ success: true, referralLink, bonus, locked: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
 // Submit doctor application
 router.post('/apply', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    const { license_number, license_url, photo_url } = req.body || {};
+    // Normalize body (handle raw buffer or string bodies)
+    let requestBody: any = req.body;
+    if (Buffer.isBuffer(requestBody)) {
+      try { requestBody = JSON.parse(requestBody.toString('utf8')); } catch {}
+    } else if (typeof requestBody === 'string') {
+      try { requestBody = JSON.parse(requestBody); } catch {}
+    }
+    const { license_number, license_url, photo_url } = requestBody || {};
     if (!license_number || !license_url || !photo_url) {
       return res.status(400).json({ error: 'license_number, license_url, photo_url required' });
     }
@@ -165,7 +173,7 @@ router.post('/apply', requireAuth, async (req: AuthenticatedRequest, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -183,7 +191,7 @@ router.get('/me/application', requireAuth, async (req: AuthenticatedRequest, res
     if (error && error.code !== 'PGRST116') return res.status(500).json({ error });
     res.json(data ?? null);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -198,7 +206,7 @@ router.get('/admin/applications', async (_req, res) => {
     if (error) return res.status(500).json({ error });
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -254,7 +262,7 @@ router.post('/admin/applications/:id/approve', async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
@@ -278,7 +286,7 @@ router.post('/admin/applications/:id/reject', async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return sendError(res, err, 500);
   }
 });
 
