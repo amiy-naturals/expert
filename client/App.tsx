@@ -188,7 +188,9 @@ const App = () => {
                 <Route path="applications" element={<AdminApplications />} />
                 <Route path="reviews" element={<AdminReviewsPage />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="super-admin" element={<SuperAdminPanel />} />
               </Route>
+              <Route path="doctor-application" element={<ProtectedOutlet><DoctorApplication /></ProtectedOutlet>} />
               <Route path="debug" element={<Debug />} />
               <Route path="privacy-policy" element={<PrivacyPolicy />} />
               <Route path="terms-and-conditions" element={<TermsAndConditions />} />
