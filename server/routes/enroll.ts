@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getServerSupabase } from "../lib/supabase";
 import { normalizeEmail, normalizePhoneE164 } from "../lib/contacts";
 import { resolveDoctorByReferralCode } from "../lib/attribution";
+import { sendError } from '../lib/error';
 
 const router = Router();
 
