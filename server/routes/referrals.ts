@@ -159,8 +159,7 @@ router.get("/network", requireAuth, async (req: AuthenticatedRequest, res) => {
       summary: { totalNetworkSales: totalSales, totalReferralPoints },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 });
 
@@ -170,8 +169,7 @@ router.get("/summary", requireAuth, async (req: AuthenticatedRequest, res) => {
     const total = (summary.level1 ?? 0) + (summary.level2 ?? 0) + (summary.level3 ?? 0);
     res.json({ level1: summary.level1, level2: summary.level2, level3: summary.level3, total });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    return sendError(res, err, 500);
   }
 });
 
