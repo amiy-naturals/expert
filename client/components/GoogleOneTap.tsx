@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { getSupabase } from "@/lib/supabase";
 
 export default function GoogleOneTapLogin() {
   const btnRef = useRef<HTMLDivElement | null>(null);
@@ -46,17 +47,18 @@ export default function GoogleOneTapLogin() {
         g.accounts.id.initialize({
           client_id: clientId,
           callback: handleCredentialResponse,
+          auto_select: true,
+          cancel_on_tap_outside: true,
+          context: "signin",
         });
 
-        // Render the button into the ref'd div if present
         if (btnRef.current) {
           g.accounts.id.renderButton(btnRef.current, { theme: "outline", size: "large" });
         }
 
-        // Automatically show One Tap prompt (non-modal) if allowed
         try {
           g.accounts.id.prompt();
-        } catch (e) {
+        } catch {
           // ignore prompt errors
         }
       } catch (err) {
@@ -73,27 +75,20 @@ export default function GoogleOneTapLogin() {
 
   async function handleCredentialResponse(response: any) {
     try {
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: response.credential }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        // server returns { user, token }
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("token", data.token || "");
-        window.location.href = "/dashboard";
-      } else {
-        const error = await res.json().catch(() => ({}));
-        console.warn("Google sign-in failed", error);
-        // fallback: show an error toast if available
-        alert(`Authentication failed: ${error.message || "Unknown error"}`);
+      const idToken = response?.credential;
+      if (!idToken) {
+        alert("Authentication failed: Missing credential");
+        return;
       }
-    } catch (err) {
+      const supabase = getSupabase();
+      const { error } = await supabase.auth.signInWithIdToken({ provider: "google", token: idToken });
+      if (error) throw error;
+      // lib/supabase.ts will fetch /api/users/me and upsert user row if needed
+      window.location.href = "/dashboard";
+    } catch (err: any) {
       console.error("Google login error:", err);
-      alert("Authentication failed");
+      const msg = err?.message || "Authentication failed";
+      alert(msg);
     }
   }
 
