@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ExpertProvider, useExpertCtx } from "./context";
 import { DISCOUNT_THRESHOLDS } from "@/lib/expert";
