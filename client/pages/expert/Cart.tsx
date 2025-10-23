@@ -183,7 +183,10 @@ export default function CartStep() {
         </div>
 
         <Button asChild disabled={!minReached} className="w-full">
-          <Link to="/expert/subscription" className="truncate">Next: Create Subscription</Link>
+          <Link to="/expert/subscription" className="truncate">
+            <span className="sm:hidden">Next</span>
+            <span className="hidden sm:inline">Next: Create Subscription</span>
+          </Link>
         </Button>
       </div>
     </div>
