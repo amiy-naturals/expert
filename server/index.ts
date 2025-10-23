@@ -27,25 +27,47 @@ export function createServer() {
   // Middleware
   app.use(cors());
 
-  // Parse JSON with larger limit and strict mode off to handle edge cases
+  // Custom middleware to handle body parsing across all contexts (local Express, serverless-http, etc)
+  app.use((req, res, next) => {
+    const contentType = req.get('content-type') || '';
+
+    // Skip raw body handling for webhooks
+    if (req.path.includes('/webhooks/')) {
+      return next();
+    }
+
+    // If JSON content-type but body is empty/undefined, try to manually collect and parse
+    if (contentType.includes('application/json')) {
+      let rawData = '';
+
+      req.on('data', (chunk) => {
+        rawData += chunk.toString();
+      });
+
+      req.on('end', () => {
+        if (rawData && !req.body) {
+          try {
+            req.body = JSON.parse(rawData);
+          } catch (e) {
+            req.body = {};
+          }
+        }
+        next();
+      });
+
+      req.on('error', (err) => {
+        console.error('Error reading request body:', err);
+        req.body = {};
+        next();
+      });
+    } else {
+      next();
+    }
+  });
+
+  // Standard JSON parser for normal cases
   app.use(express.json({ limit: '10mb', strict: false }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-  // Ensure body is available even if middleware parsing fails (for serverless-http compatibility)
-  app.use((req, res, next) => {
-    // If body is still empty/undefined but we have raw content, try to parse it
-    if (!req.body || (typeof req.body === 'object' && Object.keys(req.body).length === 0)) {
-      const contentType = req.get('content-type') || '';
-      if (contentType.includes('application/json') && typeof req.body === 'string' && req.body) {
-        try {
-          req.body = JSON.parse(req.body);
-        } catch (e) {
-          // Continue with original body
-        }
-      }
-    }
-    next();
-  });
 
   // Shopify webhooks require raw body for HMAC verification (must be AFTER general JSON parser)
   app.use('/api/webhooks/shopify', express.raw({ type: '*/*' }));
