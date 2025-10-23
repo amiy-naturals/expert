@@ -111,58 +111,75 @@ export const captureReferral: RequestHandler = async (req, res) => {
     let shopifyProfile = null;
 
     try {
-      const shopify = getShopifyClient();
+      const config = getConfig();
 
-      // Search for customer by email first
+      // Search for customer by email using REST API
       if (emailNorm) {
-        const query = `email:${email}`;
-        const response = await shopify.graphql(`
-          query {
-            customers(first: 1, query: "${query}") {
-              edges {
-                node {
-                  id
-                  email
-                  firstName
-                  lastName
-                  phone
-                  defaultAddress {
-                    address1
-                    address2
-                    city
-                    province
-                    zip
-                    country
-                  }
-                  orders(first: 100) {
-                    edges {
-                      node {
-                        totalPriceSet {
-                          shopMoney {
-                            amount
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        `);
+        const searchQuery = `email:${email}`;
+        const params = new URLSearchParams({ query: searchQuery });
 
-        if (response?.customers?.edges?.[0]) {
-          const customer = response.customers.edges[0].node;
-          shopifyProfile = {
-            name: `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
-            email: customer.email,
-            phone: customer.phone,
-            address: customer.defaultAddress,
-            totalOrders: customer.orders?.edges?.length || 0,
-            totalSpent: customer.orders?.edges?.reduce((sum: number, edge: any) => {
-              return sum + parseFloat(edge.node.totalPriceSet?.shopMoney?.amount || 0);
-            }, 0) || 0,
-          };
+        const response = await fetch(
+          `https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/customers/search.json?${params}`,
+          {
+            headers: {
+              'X-Shopify-Access-Token': config.shopify.adminToken,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json() as { customers: Array<{
+            id: number;
+            email: string;
+            first_name?: string;
+            last_name?: string;
+            phone?: string;
+            default_address?: {
+              address1?: string;
+              address2?: string;
+              city?: string;
+              province?: string;
+              zip?: string;
+              country?: string;
+            };
+          }> };
+
+          if (data.customers && data.customers.length > 0) {
+            const customer = data.customers[0];
+
+            // Fetch customer orders to get total spent
+            let totalSpent = 0;
+            let totalOrders = 0;
+            try {
+              const ordersResponse = await fetch(
+                `https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/customers/${customer.id}/orders.json`,
+                {
+                  headers: {
+                    'X-Shopify-Access-Token': config.shopify.adminToken,
+                  },
+                }
+              );
+
+              if (ordersResponse.ok) {
+                const ordersData = await ordersResponse.json() as { orders: Array<{ total_price?: string }> };
+                totalOrders = ordersData.orders?.length || 0;
+                totalSpent = ordersData.orders?.reduce((sum, order) => {
+                  return sum + parseFloat(order.total_price || '0');
+                }, 0) || 0;
+              }
+            } catch (orderError) {
+              console.error('Error fetching customer orders:', orderError);
+            }
+
+            shopifyProfile = {
+              name: `${customer.first_name || ''} ${customer.last_name || ''}`.trim(),
+              email: customer.email,
+              phone: customer.phone,
+              address: customer.default_address,
+              totalOrders,
+              totalSpent,
+            };
+          }
         }
       }
 
