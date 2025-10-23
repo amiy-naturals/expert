@@ -199,7 +199,7 @@ router.post('/debug/onboarding', requireAuth, async (req: AuthenticatedRequest, 
 router.post('/debug/build', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { parsed } = await validateAndParse(req.body);
-    const { lineItems, subtotal, discountPct, discountAmt, total } = await buildLineItems(parsed.cart);
+    const { lineItems, subtotal, discountPct, discountAmt, total } = await buildLineItems(parsed.cart as { productId: string; qty: number }[]);
     res.json({ lineItems, subtotal, discountPct, discountAmt, total });
   } catch (err) {
     if (err instanceof ZodError) return res.status(400).json({ error: err.issues?.[0]?.message || 'Invalid request' });
@@ -211,9 +211,9 @@ router.post('/debug/build', requireAuth, async (req: AuthenticatedRequest, res) 
 router.post('/debug/subscriptions', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { parsed } = await validateAndParse(req.body);
-    const { lineItems } = await buildLineItems(parsed.cart);
+    const { lineItems } = await buildLineItems(parsed.cart as { productId: string; qty: number }[]);
     const uid = req.authUser.id;
-    await createSubscriptionsFor(uid, parsed.subscription, lineItems.map(li => ({ variantId: li.variantId, quantity: li.quantity })));
+    await createSubscriptionsFor(uid, parsed.subscription as { nextDate: string; frequency: "monthly" | "alternate" }, lineItems.map(li => ({ variantId: li.variantId, quantity: li.quantity })));
     res.json({ ok: true, count: lineItems.length });
   } catch (err) {
     if (err instanceof ZodError) return res.status(400).json({ error: err.issues?.[0]?.message || 'Invalid request' });
@@ -225,7 +225,7 @@ router.post('/debug/subscriptions', requireAuth, async (req: AuthenticatedReques
 router.post('/debug/order', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { parsed } = await validateAndParse(req.body);
-    const { lineItems, total } = await buildLineItems(parsed.cart);
+    const { lineItems, total } = await buildLineItems(parsed.cart as { productId: string; qty: number }[]);
     const uid = req.authUser.id;
     const { order, orderRecord } = await createRazorpayAndOrder(uid, total, lineItems);
     res.json({
