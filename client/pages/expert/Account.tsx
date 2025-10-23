@@ -95,7 +95,23 @@ export default function AccountStep() {
                 }}
               />
               <span>
-                I agree to the Terms of Use, Expert Terms & Conditions and Privacy Policy.
+                I agree to the Terms of Use,{" "}
+                <button
+                  type="button"
+                  onClick={() => setOpenModal("tc")}
+                  className="underline text-primary hover:text-primary/80"
+                >
+                  Expert Terms & Conditions
+                </button>
+                {" "}and{" "}
+                <button
+                  type="button"
+                  onClick={() => setOpenModal("pp")}
+                  className="underline text-primary hover:text-primary/80"
+                >
+                  Privacy Policy
+                </button>
+                .
               </span>
             </label>
             <label className="flex items-start gap-2">
