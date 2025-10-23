@@ -27,6 +27,19 @@ export function createServer() {
   // Middleware
   app.use(cors());
 
+  // Custom middleware to handle serverless-http body parsing before express.json
+  app.use((req, res, next) => {
+    // Handle serverless-http from Netlify Functions which may pass body as property
+    if (!req.body && (req as any).rawBody) {
+      try {
+        req.body = JSON.parse((req as any).rawBody);
+      } catch (e) {
+        // Continue to next parser
+      }
+    }
+    next();
+  });
+
   // Parse JSON with larger limit and strict mode off to handle edge cases
   app.use(express.json({ limit: '10mb', strict: false }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
