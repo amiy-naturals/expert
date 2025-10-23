@@ -3,6 +3,7 @@ import { useExpertCtx } from "./context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthUser } from "@/lib/auth";
 
