@@ -1,0 +1,262 @@
+import { Router, RequestHandler } from 'express';
+import { getSupabase } from '../lib/supabase';
+import { normalizeEmail, normalizePhone } from '../lib/contacts';
+import { getShopifyClient } from '../lib/shopify';
+import { z } from 'zod';
+
+const router = Router();
+
+const captureSchema = z.object({
+  referralCode: z.string().min(1),
+  email: z.string().email().nullable().optional(),
+  phone: z.string().nullable().optional(),
+});
+
+/**
+ * POST /api/referral-capture
+ * Capture a referral lead from a doctor's referral link
+ * 
+ * Flow:
+ * 1. Validate referral code and get doctor ID
+ * 2. Save referral_captures record
+ * 3. Try to match to existing Shopify customer
+ * 4. Link if found, keep pending if not
+ */
+export const captureReferral: RequestHandler = async (req, res) => {
+  try {
+    const parsed = captureSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'Invalid request',
+        errors: parsed.error.errors,
+      });
+    }
+
+    const { referralCode, email, phone } = parsed.data;
+
+    // At least one contact field is required
+    if (!email && !phone) {
+      return res.status(400).json({
+        message: 'At least email or phone is required',
+      });
+    }
+
+    // Parse referral code to get doctor ID
+    // Format: AM-XXXXX where XXXXX is doctor's user ID (first 5 chars)
+    const codeParts = referralCode.split('-');
+    if (codeParts.length !== 2 || codeParts[0] !== 'AM') {
+      return res.status(400).json({
+        message: 'Invalid referral code format',
+      });
+    }
+
+    const doctorIdShort = codeParts[1];
+
+    // Get Supabase client
+    const supabase = getSupabase();
+    if (!supabase) {
+      return res.status(500).json({ message: 'Database connection failed' });
+    }
+
+    // Find doctor by username or partial ID match
+    // The referral code is based on doctor's ID, so we need to decode it
+    // For now, we'll search by referral code which should map to a doctor
+    const { data: doctors, error: doctorError } = await supabase
+      .from('users')
+      .select('id, name, email, username')
+      .or(`username.eq.${referralCode},id.ilike.${doctorIdShort}%`)
+      .limit(1);
+
+    if (doctorError) {
+      console.error('Doctor lookup error:', doctorError);
+      return res.status(500).json({ message: 'Failed to verify referral code' });
+    }
+
+    if (!doctors || doctors.length === 0) {
+      return res.status(404).json({ message: 'Referral code not found' });
+    }
+
+    const doctor = doctors[0];
+
+    // Normalize email and phone for matching
+    const emailNorm = email ? normalizeEmail(email) : null;
+    const phoneE164 = phone ? normalizePhone(phone) : null;
+
+    // Check if this lead already exists
+    let existingCapture = null;
+    if (emailNorm) {
+      const { data } = await supabase
+        .from('referral_captures')
+        .select('*')
+        .eq('email_normalized', emailNorm)
+        .eq('doctor_id', doctor.id)
+        .single();
+      existingCapture = data;
+    }
+
+    if (!existingCapture && phoneE164) {
+      const { data } = await supabase
+        .from('referral_captures')
+        .select('*')
+        .eq('phone_e164', phoneE164)
+        .eq('doctor_id', doctor.id)
+        .single();
+      existingCapture = data;
+    }
+
+    // Try to match to Shopify customer
+    let matchedUserId = null;
+    let matchedExternalId = null;
+    let shopifyProfile = null;
+
+    try {
+      const shopify = getShopifyClient();
+
+      // Search for customer by email first
+      if (emailNorm) {
+        const query = `email:${email}`;
+        const response = await shopify.graphql(`
+          query {
+            customers(first: 1, query: "${query}") {
+              edges {
+                node {
+                  id
+                  email
+                  firstName
+                  lastName
+                  phone
+                  defaultAddress {
+                    address1
+                    address2
+                    city
+                    province
+                    zip
+                    country
+                  }
+                  orders(first: 100) {
+                    edges {
+                      node {
+                        totalPriceSet {
+                          shopMoney {
+                            amount
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `);
+
+        if (response?.customers?.edges?.[0]) {
+          const customer = response.customers.edges[0].node;
+          shopifyProfile = {
+            name: `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
+            email: customer.email,
+            phone: customer.phone,
+            address: customer.defaultAddress,
+            totalOrders: customer.orders?.edges?.length || 0,
+            totalSpent: customer.orders?.edges?.reduce((sum: number, edge: any) => {
+              return sum + parseFloat(edge.node.totalPriceSet?.shopMoney?.amount || 0);
+            }, 0) || 0,
+          };
+        }
+      }
+
+      // Check if email matches an existing Amiy user
+      if (emailNorm) {
+        const { data: userByEmail } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+        if (userByEmail) {
+          matchedUserId = userByEmail.id;
+        }
+      }
+
+      // Check if matches external customer
+      if (phoneE164 || emailNorm) {
+        let query = supabase.from('external_customers').select('id');
+        if (emailNorm) {
+          query = query.eq('email_norm', emailNorm);
+        } else if (phoneE164) {
+          query = query.eq('phone_e164', phoneE164);
+        }
+
+        const { data: externalCustomers } = await query.limit(1);
+        if (externalCustomers && externalCustomers.length > 0) {
+          matchedExternalId = externalCustomers[0].id;
+        }
+      }
+    } catch (shopifyError) {
+      console.error('Shopify lookup error:', shopifyError);
+      // Continue without Shopify match
+    }
+
+    // Save or update referral capture
+    const captureData = {
+      doctor_id: doctor.id,
+      email: email || null,
+      phone: phone || null,
+      email_normalized: emailNorm,
+      phone_e164: phoneE164,
+      source: 'referral_link',
+      matched_to_user_id: matchedUserId,
+      matched_to_external_customer_id: matchedExternalId,
+      status: matchedUserId || matchedExternalId ? 'matched' : 'pending',
+      metadata: {
+        shopifyProfile: shopifyProfile || null,
+        capturedAt: new Date().toISOString(),
+        userAgent: req.get('user-agent'),
+      },
+    };
+
+    let capture;
+    if (existingCapture) {
+      // Update existing capture
+      const { data, error } = await supabase
+        .from('referral_captures')
+        .update(captureData)
+        .eq('id', existingCapture.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      capture = data;
+    } else {
+      // Insert new capture
+      const { data, error } = await supabase
+        .from('referral_captures')
+        .insert([captureData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      capture = data;
+    }
+
+    return res.status(200).json({
+      success: true,
+      captureId: capture.id,
+      status: capture.status,
+      message: matchedUserId
+        ? 'Welcome back! Your referral has been linked.'
+        : 'Thank you for your interest! We\'ll keep you updated.',
+      shopifyProfile: shopifyProfile || null,
+    });
+  } catch (error) {
+    console.error('Referral capture error:', error);
+    return res.status(500).json({
+      message: error instanceof Error ? error.message : 'Failed to capture referral',
+    });
+  }
+};
+
+router.post('/', captureReferral);
+
+export default router;
