@@ -2,6 +2,7 @@ import { Router, RequestHandler } from 'express';
 import { getServerSupabase } from '../lib/supabase';
 import { normalizeEmail, normalizePhoneE164 } from '../lib/contacts';
 import { getConfig } from '../lib/env';
+import { syncReferralCapturesForUser } from '../lib/referrals';
 import { z } from 'zod';
 
 const router = Router();
