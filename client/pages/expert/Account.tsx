@@ -24,14 +24,6 @@ export default function AccountStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
-  const fullName = `${account.firstName || ""} ${account.lastName || ""}`.trim();
-
-  const handleNameChange = (value: string) => {
-    const parts = value.trim().split(/\s+/);
-    const firstName = parts[0] || "";
-    const lastName = parts.slice(1).join(" ");
-    setAccount({ firstName, lastName });
-  };
 
   const required = Boolean(account.firstName && account.lastName && account.email && agree);
 
