@@ -130,7 +130,7 @@ export default function AccountStep() {
           <Link to="/expert/subscription">Back</Link>
         </Button>
         <Button disabled={!required} onClick={() => navigate("/expert/review")} className="flex-1 truncate">
-          Next: Review
+          Next
         </Button>
       </div>
     </div>
