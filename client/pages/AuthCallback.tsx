@@ -23,7 +23,12 @@ export default function AuthCallback() {
           if (error) throw error;
           session = data.session;
         } else if (token && type === "magiclink") {
+          const email = params.get("email");
+          if (!email) {
+            throw new Error("Email is required for magic link verification");
+          }
           const { data, error } = await supabase.auth.verifyOtp({
+            email,
             token,
             type: "magiclink",
           });
