@@ -93,6 +93,34 @@ export async function updateOrderRecord({
   return data as OrderRecord;
 }
 
+export async function updateUserMaxTotalSpent(userId: string, orderAmount: number) {
+  const supabase = getServerSupabase();
+
+  // Get current max_total_spent
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("max_total_spent")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (userError) throw userError;
+
+  const currentMax = Number(userData?.max_total_spent ?? 0);
+  const newMax = Math.max(currentMax, orderAmount);
+
+  // Update max_total_spent if new order is higher
+  if (newMax > currentMax) {
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({ max_total_spent: newMax })
+      .eq("id", userId);
+
+    if (updateError) throw updateError;
+  }
+
+  return newMax;
+}
+
 export async function listOrdersForUser(userId: string) {
   const supabase = getServerSupabase();
 
