@@ -56,6 +56,7 @@ export function createServer() {
   app.use('/api/enroll', enrollRouter);
   app.use('/api/webhooks', webhooksRouter);
   app.use('/api/users', usersRouter);
+  app.use('/api/referral-capture', referralCaptureRouter);
 
   // Debug route to check Supabase access from the running server (admin only)
   app.use('/api/debug/supabase', debugSupabaseRouter);
