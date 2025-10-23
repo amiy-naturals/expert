@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ExpertProvider, useExpertCtx } from "./context";
 import { DISCOUNT_THRESHOLDS } from "@/lib/expert";
@@ -112,9 +113,11 @@ export default function ExpertLayout() {
   }, [navigate]);
   return (
     <ExpertProvider>
-      <Stepper />
-      <Guard />
-      <Outlet />
+      <>
+        <Stepper />
+        <Guard />
+        <Outlet />
+      </>
     </ExpertProvider>
   );
 }

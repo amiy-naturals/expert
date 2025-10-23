@@ -65,8 +65,8 @@ export default function CartStep() {
   const loading = catalog === null;
 
   return (
-    <div className="container mx-auto pb-16">
-      <div className="mx-auto max-w-5xl">
+    <div className="min-h-screen flex flex-col">
+      <div className="container mx-auto flex-1 pb-24 lg:pb-8">
         <div className="mb-6 text-center">
           <div className="text-sm font-medium">
             {totals.discountPct >= 25
@@ -91,71 +91,105 @@ export default function CartStep() {
           )}
         </div>
 
-        {loading ? (
-          <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">Loading products…</div>
-        ) : (catalog?.length ?? 0) === 0 ? (
-          <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
-            {error || "No products available in the expert catalog."}
-            <div className="mt-4">
-              <a href="/shop" className="underline">
-                Browse public shop
-              </a>
+        <div className="grid gap-4 lg:gap-8 lg:grid-cols-4">
+          <div className="lg:col-span-3">
+            {loading ? (
+              <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">Loading products…</div>
+            ) : (catalog?.length ?? 0) === 0 ? (
+              <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+                {error || "No products available in the expert catalog."}
+                <div className="mt-4">
+                  <a href="/shop" className="underline">
+                    Browse public shop
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-3">
+                {catalog!.map((p) => {
+                  const qty = byId.get(p.id) || 0;
+                  return (
+                    <div key={p.id} className="rounded-lg border p-3">
+                      <div className="h-24 w-full overflow-hidden rounded bg-muted">
+                        {p.image ? (
+                          // eslint-disable-next-line jsx-a11y/alt-text
+                          <img src={p.image} className="h-full w-full object-cover" />
+                        ) : null}
+                      </div>
+                      <div className="mt-2 line-clamp-2 text-xs font-semibold uppercase">{p.name}</div>
+                      <div className="text-xs text-muted-foreground">₹{p.price}</div>
+                      <div className="mt-2 flex items-center gap-1">
+                        <Button variant="outline" size="sm" onClick={() => changeQty(p.id, -1)}>
+                          -
+                        </Button>
+                        <div className="w-6 text-center text-xs">{qty}</div>
+                        <Button size="sm" onClick={() => changeQty(p.id, 1)}>
+                          +
+                        </Button>
+                      </div>
+                      <Button className="mt-2 w-full text-xs" variant={qty > 0 ? "secondary" : "default"} onClick={() => changeQty(p.id, 1)}>
+                        {qty > 0 ? "Added" : "Add"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="hidden lg:block lg:col-span-1">
+            <div className="sticky top-20 space-y-4">
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <div>Subtotal</div>
+                  <div>₹{totals.subtotal}</div>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-sm">
+                  <div>Discount</div>
+                  <div>
+                    {totals.discountPct}% (−₹{totals.discountAmount})
+                  </div>
+                </div>
+                <div className="mt-1 flex items-center justify-between font-semibold">
+                  <div>Total</div>
+                  <div>₹{totals.total}</div>
+                </div>
+              </div>
+
+              <Button asChild disabled={!minReached} className="w-full">
+                <Link to="/expert/subscription" className="truncate">
+                  <span>Next: Create Subscription</span>
+                </Link>
+              </Button>
             </div>
           </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {catalog!.map((p) => {
-              const qty = byId.get(p.id) || 0;
-              return (
-                <div key={p.id} className="rounded-lg border p-4">
-                  <div className="h-36 w-full overflow-hidden rounded bg-muted">
-                    {p.image ? (
-                      // eslint-disable-next-line jsx-a11y/alt-text
-                      <img src={p.image} className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="mt-4 text-sm font-semibold uppercase">{p.name}</div>
-                  <div className="text-sm text-muted-foreground">₹{p.price}</div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => changeQty(p.id, -1)}>
-                      -
-                    </Button>
-                    <div className="w-8 text-center">{qty}</div>
-                    <Button size="sm" onClick={() => changeQty(p.id, 1)}>
-                      +
-                    </Button>
-                  </div>
-                  <Button className="mt-3 w-full" variant={qty > 0 ? "secondary" : "default"} onClick={() => changeQty(p.id, 1)}>
-                    {qty > 0 ? "Added" : "Add"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        </div>
+      </div>
 
-        <div className="mx-auto mt-8 max-w-3xl rounded-lg border p-4">
-          <div className="flex items-center justify-between text-sm">
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden border-t bg-background p-4 space-y-3">
+        <div className="rounded-lg border p-3">
+          <div className="flex items-center justify-between text-xs">
             <div>Subtotal</div>
             <div>₹{totals.subtotal}</div>
           </div>
-          <div className="mt-1 flex items-center justify-between text-sm">
+          <div className="mt-1 flex items-center justify-between text-xs">
             <div>Discount</div>
             <div>
               {totals.discountPct}% (−₹{totals.discountAmount})
             </div>
           </div>
-          <div className="mt-1 flex items-center justify-between font-semibold">
+          <div className="mt-1 flex items-center justify-between font-semibold text-sm">
             <div>Total</div>
             <div>₹{totals.total}</div>
           </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <Button asChild disabled={!minReached}>
-            <Link to="/expert/subscription">Next: Create Subscription</Link>
-          </Button>
-        </div>
+        <Button asChild disabled={!minReached} className="w-full">
+          <Link to="/expert/subscription" className="truncate">
+            <span className="sm:hidden">Next</span>
+            <span className="hidden sm:inline">Next: Create Subscription</span>
+          </Link>
+        </Button>
       </div>
     </div>
   );

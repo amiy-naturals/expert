@@ -54,36 +54,47 @@ export default function ReviewStep() {
   }
 
   return (
-    <div className="container mx-auto pb-16">
-      <div className="mx-auto max-w-3xl rounded-lg border p-6">
-        <h2 className="text-xl font-semibold">Review & Submit</h2>
-        <div className="mt-4 space-y-3 text-sm">
-          <div className="flex items-center justify-between">
-            <span>Items</span>
-            <span>{cart.reduce((s, i) => s + i.qty, 0)}</span>
+    <div className="min-h-screen flex flex-col">
+      <div className="container mx-auto flex-1 pb-24 lg:pb-8">
+        <div className="mx-auto max-w-3xl rounded-lg border p-6">
+          <h2 className="text-xl font-semibold">Review & Submit</h2>
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span>Items</span>
+              <span>{cart.reduce((s, i) => s + i.qty, 0)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Subtotal</span>
+              <span>₹{totals.subtotal}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Discount</span>
+              <span>{totals.discountPct}% (−₹{totals.discountAmount})</span>
+            </div>
+            <div className="flex items-center justify-between font-semibold">
+              <span>Total</span>
+              <span>₹{totals.total}</span>
+            </div>
+            <div className="pt-2 text-xs text-muted-foreground">
+              Next Order: {subscription.nextDate || "—"} · Frequency: {subscription.frequency}
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span>Subtotal</span>
-            <span>₹{totals.subtotal}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Discount</span>
-            <span>{totals.discountPct}% (−₹{totals.discountAmount})</span>
-          </div>
-          <div className="flex items-center justify-between font-semibold">
-            <span>Total</span>
-            <span>₹{totals.total}</span>
-          </div>
-          <div className="pt-2 text-xs text-muted-foreground">
-            Next Order: {subscription.nextDate || "—"} · Frequency: {subscription.frequency}
+          <div className="hidden lg:flex mt-6 items-center justify-between">
+            <Button asChild variant="outline">
+              <Link to="/expert/account">Back</Link>
+            </Button>
+            <Button onClick={submit} loading={loading} disabled={loading}>Submit</Button>
           </div>
         </div>
-        <div className="mt-6 flex items-center justify-between">
-          <Button asChild variant="outline">
-            <Link to="/expert/account">Back</Link>
-          </Button>
-          <Button onClick={submit} loading={loading} disabled={loading}>Submit</Button>
-        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden border-t bg-background p-3 flex gap-3">
+        <Button asChild variant="outline" className="flex-1">
+          <Link to="/expert/account">Back</Link>
+        </Button>
+        <Button onClick={submit} loading={loading} disabled={loading} className="flex-1 truncate">
+          <span>Submit</span>
+        </Button>
       </div>
     </div>
   );
