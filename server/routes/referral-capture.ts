@@ -1,7 +1,7 @@
 import { Router, RequestHandler } from 'express';
 import { getSupabase } from '../lib/supabase';
 import { normalizeEmail, normalizePhone } from '../lib/contacts';
-import { getShopifyClient } from '../lib/shopify';
+import { getConfig } from '../lib/env';
 import { z } from 'zod';
 
 const router = Router();
