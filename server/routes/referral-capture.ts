@@ -54,10 +54,7 @@ export const captureReferral: RequestHandler = async (req, res) => {
     const doctorIdentifier = codeParts[1].toLowerCase();
 
     // Get Supabase client
-    const supabase = getSupabase();
-    if (!supabase) {
-      return res.status(500).json({ message: 'Database connection failed' });
-    }
+    const supabase = getServerSupabase();
 
     // Find doctor by email prefix or username
     // The referral code is AM-{emailPrefix} where emailPrefix is part before @
