@@ -43,6 +43,12 @@ export default function ReferralCapturePopup({ referralCode, onSuccess }: Referr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate: referral code must be present
+    if (!referralCode || !referralCode.trim()) {
+      toast.error('Invalid referral code');
+      return;
+    }
+
     // Validate: at least one field is required
     if (!email.trim() && !phone.trim()) {
       toast.error('Please enter your email or mobile number');
@@ -61,7 +67,7 @@ export default function ReferralCapturePopup({ referralCode, onSuccess }: Referr
       const data = await apiFetch('/referral-capture', {
         method: 'POST',
         body: JSON.stringify({
-          referralCode,
+          referralCode: referralCode.trim(),
           email: email.trim() || null,
           phone: phone.trim() || null,
         }),
