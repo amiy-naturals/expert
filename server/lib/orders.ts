@@ -119,11 +119,11 @@ export async function listOrdersForUser(userId: string) {
   let shopifyOrders: any[] = [];
   try {
     const config = getConfig();
-    const searchQuery = `email:${userData.email}`;
-    const params = new URLSearchParams({ query: searchQuery });
 
-    const response = await fetch(
-      `https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/orders.json?${params}&limit=250&status=any`,
+    // First, search for customers with this email
+    const customerSearchParams = new URLSearchParams({ query: `email:${userData.email}` });
+    const customerResponse = await fetch(
+      `https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/customers/search.json?${customerSearchParams}`,
       {
         headers: {
           'X-Shopify-Access-Token': config.shopify.adminToken,
@@ -131,9 +131,26 @@ export async function listOrdersForUser(userId: string) {
       }
     );
 
-    if (response.ok) {
-      const data = await response.json() as { orders: any[] };
-      shopifyOrders = data.orders ?? [];
+    if (customerResponse.ok) {
+      const customerData = await customerResponse.json() as { customers: any[] };
+      const customers = customerData.customers ?? [];
+
+      // For each customer found, get their orders
+      for (const customer of customers) {
+        const ordersResponse = await fetch(
+          `https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/customers/${customer.id}/orders.json?limit=250&status=any`,
+          {
+            headers: {
+              'X-Shopify-Access-Token': config.shopify.adminToken,
+            },
+          }
+        );
+
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json() as { orders: any[] };
+          shopifyOrders = shopifyOrders.concat(ordersData.orders ?? []);
+        }
+      }
     }
   } catch (err) {
     console.error('Error fetching Shopify orders:', err);
