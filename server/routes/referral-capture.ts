@@ -24,54 +24,44 @@ const captureSchema = z.object({
  */
 export const captureReferral: RequestHandler = async (req, res) => {
   try {
-    // Debug: Log request details
-    console.log('=== REFERRAL CAPTURE REQUEST ===');
-    console.log('Content-Type:', req.get('content-type'));
-    console.log('Raw body type:', typeof req.body);
-    console.log('Raw body keys:', req.body ? Object.keys(req.body) : 'null/undefined');
-    console.log('Raw body:', JSON.stringify(req.body, null, 2));
-    console.log('referralCode value:', req.body?.referralCode);
-    console.log('================================');
-
-    // Ensure body is parsed as JSON (fallback if middleware didn't parse it)
     let body = req.body;
+    const contentType = req.get('content-type') || '';
 
-    // If body is a string, parse it as JSON
-    if (typeof body === 'string') {
-      console.log('Body is string, parsing...');
+    // Handle Buffer body (from serverless-http)
+    if (Buffer.isBuffer(body)) {
       try {
-        body = JSON.parse(body);
+        body = JSON.parse(body.toString('utf-8'));
       } catch (e) {
-        return res.status(400).json({
-          message: 'Invalid request: malformed JSON',
-          details: String(e),
-        });
+        return res.status(400).json({ message: 'Invalid request: malformed JSON in buffer' });
       }
     }
 
-    // If body is empty, provide helpful error
-    if (!body || typeof body !== 'object') {
+    // Handle string body
+    if (typeof body === 'string') {
+      if (!body) {
+        return res.status(400).json({ message: 'Invalid request: empty request body' });
+      }
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        return res.status(400).json({ message: 'Invalid request: malformed JSON' });
+      }
+    }
+
+    // If still no valid body, return error
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return res.status(400).json({
-        message: 'Invalid request: empty or invalid body',
-        received: {
-          type: typeof body,
-          value: body,
-        },
+        message: 'Invalid request: body must be a JSON object',
+        received: typeof body,
       });
     }
 
     const parsed = captureSchema.safeParse(body);
 
     if (!parsed.success) {
-      console.log('Schema validation failed:', parsed.error.errors);
       return res.status(400).json({
-        message: 'Invalid request',
+        message: 'Invalid request: validation failed',
         errors: parsed.error.errors,
-        receivedData: {
-          referralCode: body.referralCode,
-          email: body.email,
-          phone: body.phone,
-        },
       });
     }
 
