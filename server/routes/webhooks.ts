@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyWebhookHmac, updateOrderNote } from "../lib/shopify";
+import { verifyWebhookHmac, updateOrderNote, updateCustomerMetafield } from "../lib/shopify";
 import { getServerSupabase } from "../lib/supabase";
 import { pickOrderContact, resolveDoctorChain, isPostJoin } from "../lib/attribution";
 import { recordLockedPointsTransaction, recordPointsTransaction } from "../lib/loyalty";
