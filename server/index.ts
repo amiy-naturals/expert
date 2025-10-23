@@ -19,6 +19,7 @@ import authRouter from "./routes/auth";
 import enrollRouter from "./routes/enroll";
 import webhooksRouter from "./routes/webhooks";
 import debugSupabaseRouter from "./routes/debug-supabase";
+import referralCaptureRouter from "./routes/referral-capture";
 
 export function createServer() {
   const app = express();
@@ -55,6 +56,7 @@ export function createServer() {
   app.use('/api/enroll', enrollRouter);
   app.use('/api/webhooks', webhooksRouter);
   app.use('/api/users', usersRouter);
+  app.use('/api/referral-capture', referralCaptureRouter);
 
   // Debug route to check Supabase access from the running server (admin only)
   app.use('/api/debug/supabase', debugSupabaseRouter);
