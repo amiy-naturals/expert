@@ -95,13 +95,84 @@ export async function updateOrderRecord({
 
 export async function listOrdersForUser(userId: string) {
   const supabase = getServerSupabase();
-  const { data, error } = await supabase
+
+  // Get user email
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (userError) throw userError;
+  if (!userData?.email) return [] as OrderRecord[];
+
+  // Get local orders
+  const { data: localOrders, error: ordersError } = await supabase
     .from("orders")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as OrderRecord[];
+
+  if (ordersError) throw ordersError;
+
+  // Get Shopify orders for this user's email
+  let shopifyOrders: any[] = [];
+  try {
+    const config = getConfig();
+    const searchQuery = `email:${userData.email}`;
+    const params = new URLSearchParams({ query: searchQuery });
+
+    const response = await fetch(
+      `https://${config.shopify.domain}/admin/api/${config.shopify.apiVersion}/orders.json?${params}&limit=250&status=any`,
+      {
+        headers: {
+          'X-Shopify-Access-Token': config.shopify.adminToken,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json() as { orders: any[] };
+      shopifyOrders = data.orders ?? [];
+    }
+  } catch (err) {
+    console.error('Error fetching Shopify orders:', err);
+    // Continue without Shopify orders if fetch fails
+  }
+
+  // Convert Shopify orders to match our OrderRecord format
+  const formattedShopifyOrders = shopifyOrders.map((order) => ({
+    id: `shopify_${order.id}`,
+    user_id: userId,
+    amount: Number(order.total_price || 0),
+    currency: order.currency || 'INR',
+    type: 'one_time' as OrderType,
+    status: order.financial_status === 'paid' ? 'paid' : 'pending' as OrderStatus,
+    razorpay_order_id: null,
+    razorpay_payment_id: null,
+    shopify_order_id: String(order.id),
+    subscription_id: null,
+    metadata: {
+      lineItems: order.line_items?.map((li: any) => ({
+        title: li.title,
+        quantity: li.quantity,
+        price: Number(li.price),
+      })) ?? [],
+      shopifyOrderName: order.name,
+      shopifyCreatedAt: order.created_at,
+    },
+    created_at: order.created_at,
+  })) as OrderRecord[];
+
+  // Combine and sort by created_at descending
+  const allOrders = [...(localOrders ?? []), ...formattedShopifyOrders];
+  allOrders.sort((a, b) => {
+    const aDate = new Date(a.created_at || 0).getTime();
+    const bDate = new Date(b.created_at || 0).getTime();
+    return bDate - aDate;
+  });
+
+  return allOrders;
 }
 
 export async function countPaidOrders(userId: string) {
