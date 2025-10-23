@@ -68,15 +68,20 @@ export const captureReferral: RequestHandler = async (req, res) => {
 
     // Ensure body is an object
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      const debugInfo = {
+        type: typeof body,
+        isBuffer: Buffer.isBuffer(body),
+        isArray: Array.isArray(body),
+        keys: typeof body === 'object' ? Object.keys(body) : [],
+        contentType: req.get('content-type'),
+        contentLength: req.get('content-length'),
+        method: req.method,
+        headers: req.headers,
+      };
+      console.error('Invalid body:', debugInfo);
       return res.status(400).json({
         message: 'Invalid request: body must be a JSON object',
-        received: {
-          type: typeof body,
-          isBuffer: Buffer.isBuffer(body),
-          isArray: Array.isArray(body),
-          keys: typeof body === 'object' ? Object.keys(body) : [],
-          value: body,
-        },
+        debug: debugInfo,
       });
     }
 
@@ -86,9 +91,14 @@ export const captureReferral: RequestHandler = async (req, res) => {
     const parsed = captureSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.log('Validation errors:', parsed.error.errors);
       return res.status(400).json({
         message: 'Invalid request: validation failed',
         errors: parsed.error.errors,
+        debug: {
+          receivedBody: body,
+          contentType: req.get('content-type'),
+        },
       });
     }
 
