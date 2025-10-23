@@ -64,13 +64,20 @@ export default function ReferralCapturePopup({ referralCode, onSuccess }: Referr
     setIsLoading(true);
 
     try {
+      const payload = {
+        referralCode: referralCode.trim(),
+        email: email.trim() || null,
+        phone: phone.trim() || null,
+      };
+
+      console.log('=== CLIENT REFERRAL CAPTURE ===');
+      console.log('Payload:', payload);
+      console.log('Stringified:', JSON.stringify(payload));
+      console.log('================================');
+
       const data = await apiFetch('/referral-capture', {
         method: 'POST',
-        body: JSON.stringify({
-          referralCode: referralCode.trim(),
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       toast.success('Thank you! We\'ll stay in touch with you.');
