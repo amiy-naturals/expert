@@ -12,6 +12,7 @@ export default function AccountStep() {
   const [agree, setAgree] = useState(Boolean(account.agreeTerms));
   const navigate = useNavigate();
   const authUser = useAuthUser();
+  const [openModal, setOpenModal] = useState<"tc" | "pp" | null>(null);
 
   useEffect(() => {
     if (authUser && !account.email) {
