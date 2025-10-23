@@ -8,13 +8,6 @@ const router = Router();
 router.get("/status", async (_req, res) => {
   try {
     const supabase = getServerSupabase();
-    // Check current user and basic privileges
-    const [{ rows: current }, { rows: privs }] = await Promise.all([
-      // current_user and session_user
-      supabase.rpc("pg_stat_get_backend_pid").catch(() => ({ rows: [] })),
-      // Use raw SQL to inspect privileges (safe when run by service role)
-      (supabase.from("pg_catalog.pg_roles").select("rolname").limit(1).catch(() => ({ data: null })) as any),
-    ] as any);
 
     // Try simple selects to verify access
     let referralsOk = true;
@@ -31,7 +24,7 @@ router.get("/status", async (_req, res) => {
       usersOk = false;
     }
     try {
-      await supabase.from("order_attributions").select("level1_doctor_id").limit(1);
+      await supabase.from("order_attributions").select("shopify_order_id").limit(1);
     } catch {
       ordersOk = false;
     }
@@ -76,24 +69,24 @@ router.get("/master", async (_req, res) => {
 
     // Define all read-only checks used in the app
     const serviceChecks = await Promise.all([
-      runCheck("users", () => service.from("users").select("id").limit(1)),
-      runCheck("referrals", () => service.from("referrals").select("referrer_id").limit(1)),
-      runCheck("orders", () => service.from("orders").select("id").limit(1)),
-      runCheck("order_attributions", () => service.from("order_attributions").select("shopify_order_id").limit(1)),
-      runCheck("points_transactions", () => service.from("points_transactions").select("id").limit(1)),
-      runCheck("expert_onboardings", () => service.from("expert_onboardings").select("id").limit(1)),
-      runCheck("subscriptions", () => service.from("subscriptions").select("id").limit(1)),
-      runCheck("reviews", () => service.from("reviews").select("id").limit(1)),
-      runCheck("settings (maybeSingle)", () => service.from("settings").select("id").eq("id", "global").maybeSingle()),
-      runCheck("external_customers", () => service.from("external_customers").select("id").limit(1)),
-      runCheck("leaderboard_snapshots + users join", () =>
-        service
+      runCheck("users", async () => await service.from("users").select("id").limit(1)),
+      runCheck("referrals", async () => await service.from("referrals").select("referrer_id").limit(1)),
+      runCheck("orders", async () => await service.from("orders").select("id").limit(1)),
+      runCheck("order_attributions", async () => await service.from("order_attributions").select("shopify_order_id").limit(1)),
+      runCheck("points_transactions", async () => await service.from("points_transactions").select("id").limit(1)),
+      runCheck("expert_onboardings", async () => await service.from("expert_onboardings").select("id").limit(1)),
+      runCheck("subscriptions", async () => await service.from("subscriptions").select("id").limit(1)),
+      runCheck("reviews", async () => await service.from("reviews").select("id").limit(1)),
+      runCheck("settings (maybeSingle)", async () => await service.from("settings").select("id").eq("id", "global").maybeSingle()),
+      runCheck("external_customers", async () => await service.from("external_customers").select("id").limit(1)),
+      runCheck("leaderboard_snapshots + users join", async () =>
+        await service
           .from("leaderboard_snapshots")
           .select("user_id, users!leaderboard_snapshots_user_id_fkey(id)")
           .limit(1)
       ),
-      runCheck("referrals -> users join", () =>
-        service
+      runCheck("referrals -> users join", async () =>
+        await service
           .from("referrals")
           .select("referred:users!referrals_referred_id_fkey(id)")
           .limit(1)
@@ -102,12 +95,12 @@ router.get("/master", async (_req, res) => {
 
     const anonChecks = anon
       ? await Promise.all([
-          runCheck("users (anon)", () => anon.from("users").select("id").limit(1)),
-          runCheck("referrals (anon)", () => anon.from("referrals").select("referrer_id").limit(1)),
-          runCheck("orders (anon)", () => anon.from("orders").select("id").limit(1)),
-          runCheck("order_attributions (anon)", () => anon.from("order_attributions").select("shopify_order_id").limit(1)),
-          runCheck("points_transactions (anon)", () => anon.from("points_transactions").select("id").limit(1)),
-          runCheck("reviews (anon)", () => anon.from("reviews").select("id").limit(1)),
+          runCheck("users (anon)", async () => await anon.from("users").select("id").limit(1)),
+          runCheck("referrals (anon)", async () => await anon.from("referrals").select("referrer_id").limit(1)),
+          runCheck("orders (anon)", async () => await anon.from("orders").select("id").limit(1)),
+          runCheck("order_attributions (anon)", async () => await anon.from("order_attributions").select("shopify_order_id").limit(1)),
+          runCheck("points_transactions (anon)", async () => await anon.from("points_transactions").select("id").limit(1)),
+          runCheck("reviews (anon)", async () => await anon.from("reviews").select("id").limit(1)),
         ])
       : [];
 

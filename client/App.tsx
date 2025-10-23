@@ -190,7 +190,9 @@ const App = () => {
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="super-admin" element={<SuperAdminPanel />} />
               </Route>
-              <Route path="doctor-application" element={<ProtectedOutlet><DoctorApplication /></ProtectedOutlet>} />
+              <Route element={<ProtectedOutlet />}>
+                <Route path="doctor-application" element={<DoctorApplication />} />
+              </Route>
               <Route path="debug" element={<Debug />} />
               <Route path="privacy-policy" element={<PrivacyPolicy />} />
               <Route path="terms-and-conditions" element={<TermsAndConditions />} />

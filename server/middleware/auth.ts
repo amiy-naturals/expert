@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from "express";
-import type { Request, Response, NextFunction } from "express";
 import { createClient, type User } from "@supabase/supabase-js";
 import { sendError } from '../lib/error';
 import { getConfig } from "../lib/env";
