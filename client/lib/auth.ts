@@ -5,7 +5,6 @@ export type User = {
   role?: 'user' | 'admin' | 'super_admin';
   avatar?: string; // base64 or URL
   avatar_approved?: boolean;
-  clinic?: string;
   bio?: string;
   password?: string; // temp only
 };

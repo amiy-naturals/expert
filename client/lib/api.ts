@@ -136,7 +136,7 @@ export const ImagesAPI = {
 
 export const UsersAPI = {
   me: () => apiFetch('/users/me'),
-  updateMe: (patch: Partial<{ name: string; email: string; clinic: string; bio: string; avatar: string }>) =>
+  updateMe: (patch: Partial<{ name: string; email: string; bio: string; avatar: string }>) =>
     apiFetch('/users/me', { method: 'PUT', body: JSON.stringify(patch) }),
 };
 
