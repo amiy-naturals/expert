@@ -27,8 +27,20 @@ export const captureReferral: RequestHandler = async (req, res) => {
     // Handle body parsing for different contexts (Express, serverless-http, etc)
     let body = req.body;
 
+    // Debug: Log detailed request info
+    console.log('=== REFERRAL-CAPTURE DEBUG ===');
+    console.log('Method:', req.method);
+    console.log('Path:', req.path);
+    console.log('Content-Type:', req.get('content-type'));
+    console.log('Content-Length:', req.get('content-length'));
+    console.log('Body type:', typeof body);
+    console.log('Body is Buffer:', Buffer.isBuffer(body));
+    console.log('Body keys:', body && typeof body === 'object' ? Object.keys(body) : 'N/A');
+    console.log('Raw body:', JSON.stringify(body));
+
     // If body is a Buffer (serverless-http in some cases), convert to string first
     if (Buffer.isBuffer(body)) {
+      console.log('Converting Buffer to string');
       body = body.toString('utf-8');
     }
 
@@ -37,8 +49,13 @@ export const captureReferral: RequestHandler = async (req, res) => {
       if (!body || body.length === 0) {
         return res.status(400).json({
           message: 'Invalid request: empty request body',
+          debug: {
+            contentLength: req.get('content-length'),
+            contentType: req.get('content-type'),
+          },
         });
       }
+      console.log('Parsing string body as JSON');
       try {
         body = JSON.parse(body);
       } catch (e) {
@@ -53,9 +70,18 @@ export const captureReferral: RequestHandler = async (req, res) => {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return res.status(400).json({
         message: 'Invalid request: body must be a JSON object',
-        received: typeof body,
+        received: {
+          type: typeof body,
+          isBuffer: Buffer.isBuffer(body),
+          isArray: Array.isArray(body),
+          keys: typeof body === 'object' ? Object.keys(body) : [],
+          value: body,
+        },
       });
     }
+
+    console.log('Parsed body successfully:', body);
+    console.log('==============================');
 
     const parsed = captureSchema.safeParse(body);
 
