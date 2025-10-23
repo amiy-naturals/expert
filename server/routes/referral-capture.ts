@@ -81,7 +81,7 @@ export const captureReferral: RequestHandler = async (req, res) => {
 
     // Normalize email and phone for matching
     const emailNorm = email ? normalizeEmail(email) : null;
-    const phoneE164 = phone ? normalizePhone(phone) : null;
+    const phoneE164 = phone ? normalizePhoneE164(phone) : null;
 
     // Check if this lead already exists
     let existingCapture = null;
