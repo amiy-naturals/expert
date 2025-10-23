@@ -81,7 +81,7 @@ export default function SubscriptionStep() {
           <Link to="/expert">Back</Link>
         </Button>
         <Button asChild disabled={!valid} className="flex-1">
-          <Link to="/expert/account" className="truncate">Next: Account</Link>
+          <Link to="/expert/account" className="truncate">Next</Link>
         </Button>
       </div>
     </div>
