@@ -26,8 +26,9 @@ export function createServer() {
 
   // Middleware
   app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // Parse JSON with larger limit and strict mode off to handle edge cases
+  app.use(express.json({ limit: '10mb', strict: false }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   // Shopify webhooks require raw body for HMAC verification (must be AFTER general JSON parser)
   app.use('/api/webhooks/shopify', express.raw({ type: '*/*' }));
 
