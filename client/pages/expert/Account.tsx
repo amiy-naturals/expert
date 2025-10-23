@@ -152,6 +152,104 @@ export default function AccountStep() {
           <span className="hidden sm:inline">Next: Review</span>
         </Button>
       </div>
+
+      <Dialog open={openModal === "tc"} onOpenChange={(open) => setOpenModal(open ? "tc" : null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Expert Terms & Conditions</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm">
+            <section>
+              <h3 className="font-semibold mb-2">1. Expert Program Overview</h3>
+              <p className="text-muted-foreground">
+                The Amiy Expert program allows healthcare professionals to resell and recommend Amiy products to their patients and community. Experts receive exclusive discounts, recurring order benefits, and commission structures based on sales performance.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">2. Eligibility Requirements</h3>
+              <p className="text-muted-foreground">
+                To qualify as an Amiy Expert, you must be a licensed healthcare professional (doctor, dermatologist, nutritionist, etc.) or a wellness consultant approved by Amiy. You must maintain a valid license and uphold professional standards.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">3. Recurring Orders</h3>
+              <p className="text-muted-foreground">
+                Experts agree to schedule recurring orders at intervals of their choice (monthly or bi-monthly). Minimum order value of ₹1,000 applies. Orders can be modified, paused, or cancelled anytime with proper notice.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">4. Pricing and Discounts</h3>
+              <p className="text-muted-foreground">
+                Expert pricing is tiered based on order value: 15% off for orders ₹1,000+, 20% off for ₹2,000+, and 25% off for ₹3,000+. These discounts apply to recurring and one-time orders. Prices are subject to change with 30 days' notice.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">5. Limitations and Restrictions</h3>
+              <p className="text-muted-foreground">
+                Experts agree not to resell Amiy products through unauthorized channels, marketplaces, or retail stores without explicit written permission. Bulk resale agreements must be approved separately. Marketing materials must comply with regulatory guidelines.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">6. Termination</h3>
+              <p className="text-muted-foreground">
+                Either party may terminate this agreement with 30 days' written notice. Amiy reserves the right to terminate for violation of these terms, misuse of the Expert designation, or regulatory non-compliance.
+              </p>
+            </section>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openModal === "pp"} onOpenChange={(open) => setOpenModal(open ? "pp" : null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Privacy Policy</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm">
+            <section>
+              <h3 className="font-semibold mb-2">1. Information We Collect</h3>
+              <p className="text-muted-foreground">
+                We collect personal information including name, email, phone number, date of birth, gender, professional license details, and payment information. We also collect transaction history, order preferences, and device information for service improvement.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">2. How We Use Your Information</h3>
+              <p className="text-muted-foreground">
+                Your information is used to process orders, manage your Expert account, provide customer support, send promotional communications (with your consent), calculate commissions, and comply with legal obligations. We do not sell your personal information to third parties.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">3. Data Security</h3>
+              <p className="text-muted-foreground">
+                We implement industry-standard security measures including SSL encryption, secure servers, and regular security audits. While we strive to protect your information, no system is completely secure. You are responsible for maintaining confidentiality of your account credentials.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">4. Information Sharing</h3>
+              <p className="text-muted-foreground">
+                We share information with payment processors, shipping partners, and analytics providers only as necessary to provide services. Market Partners may access relevant information to manage subscriptions on your behalf if you grant permission. We comply with legal requests from law enforcement.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">5. Your Rights</h3>
+              <p className="text-muted-foreground">
+                You have the right to access, correct, or delete your personal information. You can opt out of promotional emails anytime. To exercise these rights, contact us at privacy@amiy.com. We will respond within 30 days.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">6. Cookies and Tracking</h3>
+              <p className="text-muted-foreground">
+                We use cookies and similar technologies to enhance your experience, analyze usage patterns, and remember preferences. You can manage cookie settings in your browser. Disabling cookies may affect site functionality.
+              </p>
+            </section>
+            <section>
+              <h3 className="font-semibold mb-2">7. Changes to Privacy Policy</h3>
+              <p className="text-muted-foreground">
+                We may update this policy periodically. Changes will be posted on this page with an updated effective date. Your continued use of the platform constitutes acceptance of the updated policy.
+              </p>
+            </section>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
