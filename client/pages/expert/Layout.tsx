@@ -113,9 +113,11 @@ export default function ExpertLayout() {
   }, [navigate]);
   return (
     <ExpertProvider>
-      <Stepper />
-      <Guard />
-      <Outlet />
+      <>
+        <Stepper />
+        <Guard />
+        <Outlet />
+      </>
     </ExpertProvider>
   );
 }
