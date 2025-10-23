@@ -6,6 +6,7 @@ import { getProduct } from "../lib/shopify";
 import { getRazorpay } from "../lib/razorpay";
 import { getConfig } from "../lib/env";
 import { createOrderRecord } from "../lib/orders";
+import { syncReferralCapturesForUser } from "../lib/referrals";
 
 const router = Router();
 const config = getConfig();
