@@ -40,12 +40,20 @@ export default function AccountStep() {
       <div className="container mx-auto flex-1 pb-24 lg:pb-8">
         <div className="mx-auto max-w-3xl rounded-lg border p-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <Label>Name</Label>
+            <div>
+              <Label>First Name</Label>
               <Input
-                value={fullName}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Full name"
+                value={account.firstName || ""}
+                onChange={(e) => setAccount({ firstName: e.target.value })}
+                placeholder="First name"
+              />
+            </div>
+            <div>
+              <Label>Last Name</Label>
+              <Input
+                value={account.lastName || ""}
+                onChange={(e) => setAccount({ lastName: e.target.value })}
+                placeholder="Last name"
               />
             </div>
             {!authUser && (
