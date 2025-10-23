@@ -20,7 +20,7 @@ router.post('/upload-url', async (req, res) => {
     const bucket = process.env.SUPABASE_BUCKET || 'user-uploads';
     const key = `${uuidv4()}-${filename}`;
     // create signed url (valid for 1 hour)
-    const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(key, 60 * 60);
+    const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(key, { upsert: true });
     if (error) return res.status(500).json({ error });
     res.json({ uploadUrl: data.signedUrl, key, bucket });
   } catch (err) {
