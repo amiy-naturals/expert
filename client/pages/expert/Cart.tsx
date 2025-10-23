@@ -66,95 +66,99 @@ export default function CartStep() {
 
   return (
     <div className="container mx-auto pb-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 text-center">
-          <div className="text-sm font-medium">
-            {totals.discountPct >= 25
-              ? "You did it! You just qualified for 25% off on your order!"
-              : minReached
-                ? "Congrats! You have met the order threshold. Keep adding to get a higher discount."
-                : "Add products worth at least ₹1000 to unlock 15% off"}
+      <div className="mb-6 text-center">
+        <div className="text-sm font-medium">
+          {totals.discountPct >= 25
+            ? "You did it! You just qualified for 25% off on your order!"
+            : minReached
+              ? "Congrats! You have met the order threshold. Keep adding to get a higher discount."
+              : "Add products worth at least ₹1000 to unlock 15% off"}
+        </div>
+        <div className="mt-3">
+          <Progress value={pctOfTop} />
+          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+            <span>₹1000</span>
+            <span>15%</span>
+            <span>20%</span>
+            <span>25%</span>
           </div>
-          <div className="mt-3">
-            <Progress value={pctOfTop} />
-            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>₹1000</span>
-              <span>15%</span>
-              <span>20%</span>
-              <span>25%</span>
+        </div>
+        {nextThreshold > 0 && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            ₹{nextThreshold} more to reach next discount tier
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-4">
+        <div className="lg:col-span-3">
+          {loading ? (
+            <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">Loading products…</div>
+          ) : (catalog?.length ?? 0) === 0 ? (
+            <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+              {error || "No products available in the expert catalog."}
+              <div className="mt-4">
+                <a href="/shop" className="underline">
+                  Browse public shop
+                </a>
+              </div>
             </div>
-          </div>
-          {nextThreshold > 0 && (
-            <div className="mt-2 text-xs text-muted-foreground">
-              ₹{nextThreshold} more to reach next discount tier
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {catalog!.map((p) => {
+                const qty = byId.get(p.id) || 0;
+                return (
+                  <div key={p.id} className="rounded-lg border p-3">
+                    <div className="h-24 w-full overflow-hidden rounded bg-muted">
+                      {p.image ? (
+                        // eslint-disable-next-line jsx-a11y/alt-text
+                        <img src={p.image} className="h-full w-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="mt-2 line-clamp-2 text-xs font-semibold uppercase">{p.name}</div>
+                    <div className="text-xs text-muted-foreground">₹{p.price}</div>
+                    <div className="mt-2 flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => changeQty(p.id, -1)}>
+                        -
+                      </Button>
+                      <div className="w-6 text-center text-xs">{qty}</div>
+                      <Button size="sm" onClick={() => changeQty(p.id, 1)}>
+                        +
+                      </Button>
+                    </div>
+                    <Button className="mt-2 w-full text-xs" variant={qty > 0 ? "secondary" : "default"} onClick={() => changeQty(p.id, 1)}>
+                      {qty > 0 ? "Added" : "Add"}
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {loading ? (
-          <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">Loading products…</div>
-        ) : (catalog?.length ?? 0) === 0 ? (
-          <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
-            {error || "No products available in the expert catalog."}
-            <div className="mt-4">
-              <a href="/shop" className="underline">
-                Browse public shop
-              </a>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-            {catalog!.map((p) => {
-              const qty = byId.get(p.id) || 0;
-              return (
-                <div key={p.id} className="rounded-lg border p-4">
-                  <div className="h-36 w-full overflow-hidden rounded bg-muted">
-                    {p.image ? (
-                      // eslint-disable-next-line jsx-a11y/alt-text
-                      <img src={p.image} className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="mt-4 text-sm font-semibold uppercase">{p.name}</div>
-                  <div className="text-sm text-muted-foreground">₹{p.price}</div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => changeQty(p.id, -1)}>
-                      -
-                    </Button>
-                    <div className="w-8 text-center">{qty}</div>
-                    <Button size="sm" onClick={() => changeQty(p.id, 1)}>
-                      +
-                    </Button>
-                  </div>
-                  <Button className="mt-3 w-full" variant={qty > 0 ? "secondary" : "default"} onClick={() => changeQty(p.id, 1)}>
-                    {qty > 0 ? "Added" : "Add"}
-                  </Button>
+        <div className="lg:col-span-1">
+          <div className="sticky top-4 space-y-4">
+            <div className="rounded-lg border p-4">
+              <div className="flex items-center justify-between text-sm">
+                <div>Subtotal</div>
+                <div>₹{totals.subtotal}</div>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <div>Discount</div>
+                <div>
+                  {totals.discountPct}% (−₹{totals.discountAmount})
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mx-auto mt-8 max-w-3xl rounded-lg border p-4">
-          <div className="flex items-center justify-between text-sm">
-            <div>Subtotal</div>
-            <div>₹{totals.subtotal}</div>
-          </div>
-          <div className="mt-1 flex items-center justify-between text-sm">
-            <div>Discount</div>
-            <div>
-              {totals.discountPct}% (−₹{totals.discountAmount})
+              </div>
+              <div className="mt-1 flex items-center justify-between font-semibold">
+                <div>Total</div>
+                <div>₹{totals.total}</div>
+              </div>
             </div>
-          </div>
-          <div className="mt-1 flex items-center justify-between font-semibold">
-            <div>Total</div>
-            <div>₹{totals.total}</div>
-          </div>
-        </div>
 
-        <div className="mt-6 text-center">
-          <Button asChild disabled={!minReached}>
-            <Link to="/expert/subscription">Next: Create Subscription</Link>
-          </Button>
+            <Button asChild disabled={!minReached} className="w-full">
+              <Link to="/expert/subscription">Next: Create Subscription</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
