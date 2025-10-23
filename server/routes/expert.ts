@@ -153,6 +153,13 @@ router.post("/onboard", requireAuth, async (req: AuthenticatedRequest, res) => {
 
     const { order, orderRecord } = await createRazorpayAndOrder(uid, total, lineItems);
 
+    // Sync any referral captures matched to this user
+    try {
+      await syncReferralCapturesForUser(uid);
+    } catch (syncErr) {
+      console.error("Failed to sync referral captures during expert onboarding:", syncErr);
+    }
+
     res.json({
       orderId: orderRecord.id,
       razorpayOrderId: order.id,
