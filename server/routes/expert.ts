@@ -5,7 +5,8 @@ import { getServerSupabase } from "../lib/supabase";
 import { getProduct } from "../lib/shopify";
 import { getRazorpay } from "../lib/razorpay";
 import { getConfig } from "../lib/env";
-import { createOrderRecord } from "../lib/orders";
+import { createOrderRecord, updateUserMaxTotalSpent } from "../lib/orders";
+import { syncReferralCapturesForUser } from "../lib/referrals";
 
 const router = Router();
 const config = getConfig();
@@ -151,6 +152,13 @@ router.post("/onboard", requireAuth, async (req: AuthenticatedRequest, res) => {
     await createSubscriptionsFor(uid, parsed.subscription as { nextDate: string; frequency: "monthly" | "alternate" }, lineItems.map(li => ({ variantId: li.variantId, quantity: li.quantity })));
 
     const { order, orderRecord } = await createRazorpayAndOrder(uid, total, lineItems);
+
+    // Sync any referral captures matched to this user
+    try {
+      await syncReferralCapturesForUser(uid);
+    } catch (syncErr) {
+      console.error("Failed to sync referral captures during expert onboarding:", syncErr);
+    }
 
     res.json({
       orderId: orderRecord.id,

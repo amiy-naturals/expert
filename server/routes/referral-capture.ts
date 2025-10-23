@@ -2,6 +2,7 @@ import { Router, RequestHandler } from 'express';
 import { getServerSupabase } from '../lib/supabase';
 import { normalizeEmail, normalizePhoneE164 } from '../lib/contacts';
 import { getConfig } from '../lib/env';
+import { syncReferralCapturesForUser } from '../lib/referrals';
 import { z } from 'zod';
 
 const router = Router();
@@ -284,6 +285,16 @@ export const captureReferral: RequestHandler = async (req, res) => {
 
       if (error) throw error;
       capture = data;
+    }
+
+    // If matched to a user, attempt to sync the referral
+    if (matchedUserId) {
+      try {
+        await syncReferralCapturesForUser(matchedUserId);
+      } catch (syncErr) {
+        console.error('Failed to sync referral capture to referrals table:', syncErr);
+        // Don't fail the entire request, just log the error
+      }
     }
 
     return res.status(200).json({

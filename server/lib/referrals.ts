@@ -120,3 +120,30 @@ export async function listDirectReferrals(userId: string) {
   if (error) throw error;
   return data ?? [];
 }
+
+export async function syncReferralCapturesForUser(userId: string): Promise<void> {
+  const supabase = getServerSupabase();
+
+  // Find all referral captures matched to this user
+  const { data: captures, error: captureError } = await supabase
+    .from("referral_captures")
+    .select("id, doctor_id, matched_to_user_id")
+    .eq("matched_to_user_id", userId);
+
+  if (captureError) throw captureError;
+
+  // For each capture, create a referral record if it doesn't exist
+  if (captures && captures.length > 0) {
+    for (const capture of captures) {
+      try {
+        await ensureReferralRecord({
+          referrerId: capture.doctor_id,
+          referredId: userId,
+          type: "customer",
+        });
+      } catch (err) {
+        console.error(`Failed to sync referral capture ${capture.id}:`, err);
+      }
+    }
+  }
+}

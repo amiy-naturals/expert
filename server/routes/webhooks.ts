@@ -1,10 +1,11 @@
 import express from "express";
-import { verifyWebhookHmac, updateOrderNote } from "../lib/shopify";
+import { verifyWebhookHmac, updateOrderNote, updateCustomerMetafield } from "../lib/shopify";
 import { getServerSupabase } from "../lib/supabase";
 import { pickOrderContact, resolveDoctorChain, isPostJoin } from "../lib/attribution";
 import { recordLockedPointsTransaction, recordPointsTransaction } from "../lib/loyalty";
 import { getConfig } from "../lib/env";
 import { sendError } from '../lib/error';
+import { updateUserMaxTotalSpent } from "../lib/orders";
 
 const router = express.Router();
 
@@ -131,6 +132,21 @@ router.post("/shopify", async (req, res) => {
           }
           if (userId) {
             await recordPointsTransaction({ userId, delta: custPts, reason: "order_purchase", metadata: { shopify_order_id }, orderId: undefined });
+            // Update max_total_spent for internal user
+            try {
+              await updateUserMaxTotalSpent(userId, total);
+            } catch (err) {
+              console.error('Failed to update max_total_spent for user:', err);
+            }
+            // Sync max_total_spent to Shopify customer metafield
+            const shopifyCustomerId = order?.customer?.id ? Number(order.customer.id) : null;
+            if (shopifyCustomerId) {
+              try {
+                await updateCustomerMetafield(shopifyCustomerId, "max_total_spent", total);
+              } catch (err) {
+                console.error('Failed to sync max_total_spent to Shopify:', err);
+              }
+            }
           } else if (attribution.customer_external_id) {
             await getServerSupabase().from("external_customers").update({ pending_points: (custPts) }).eq("id", attribution.customer_external_id);
           }

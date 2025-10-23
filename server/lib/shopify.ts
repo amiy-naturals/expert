@@ -178,3 +178,51 @@ export async function createShopifyOrder(payload: ShopifyOrderPayload) {
   });
   return data.order;
 }
+
+export async function updateCustomerMetafield(
+  customerId: number | string,
+  key: string,
+  value: string | number
+): Promise<void> {
+  try {
+    const metafieldNamespace = "amiy";
+    const metafieldKey = key.toLowerCase().replace(/\s+/g, "_");
+
+    // First, try to find existing metafield
+    const listResponse = await shopifyRequest<{
+      metafields: Array<{ id: string; key: string; value: string | number }>;
+    }>(`/customers/${customerId}/metafields.json?namespace=${metafieldNamespace}`);
+
+    const existing = (listResponse.data.metafields ?? []).find((m) => m.key === metafieldKey);
+
+    if (existing) {
+      // Update existing metafield
+      await shopifyRequest(`/customers/${customerId}/metafields/${existing.id}.json`, {
+        method: "PUT",
+        body: JSON.stringify({
+          metafield: {
+            id: existing.id,
+            value: String(value),
+            type: typeof value === "number" ? "number_decimal" : "string",
+          },
+        }),
+      });
+    } else {
+      // Create new metafield
+      await shopifyRequest(`/customers/${customerId}/metafields.json`, {
+        method: "POST",
+        body: JSON.stringify({
+          metafield: {
+            namespace: metafieldNamespace,
+            key: metafieldKey,
+            value: String(value),
+            type: typeof value === "number" ? "number_decimal" : "string",
+          },
+        }),
+      });
+    }
+  } catch (err) {
+    console.error(`Failed to update customer metafield: ${err}`);
+    // Don't throw - metafield updates are nice-to-have but not critical
+  }
+}

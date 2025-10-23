@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z, ZodError } from "zod";
 import { getRazorpay, verifyPaymentSignature } from "../lib/razorpay";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
-import { createOrderRecord, updateOrderRecord } from "../lib/orders";
+import { createOrderRecord, updateOrderRecord, updateUserMaxTotalSpent } from "../lib/orders";
 import { createShopifyOrder, type ShopifyOrderPayload } from "../lib/shopify";
 import { awardOrderPoints, calculateMaxRedeemablePoints } from "../lib/loyalty";
 import { getConfig } from "../lib/env";
 import { getServerSupabase } from "../lib/supabase";
+import { syncReferralCapturesForUser } from "../lib/referrals";
 
 const router = Router();
 const config = getConfig();
@@ -225,6 +226,20 @@ router.post(
         redeemedPoints: parsed.redeemedPoints ?? 0,
         context: orderRecord.type === "subscription" ? "subscription" : "one_time",
       });
+
+      // Update max_total_spent for user
+      try {
+        await updateUserMaxTotalSpent(req.authUser.id, orderRecord.amount);
+      } catch (maxSpentErr) {
+        console.error("Failed to update max_total_spent:", maxSpentErr);
+      }
+
+      // Sync any referral captures matched to this user
+      try {
+        await syncReferralCapturesForUser(req.authUser.id);
+      } catch (syncErr) {
+        console.error("Failed to sync referral captures during checkout:", syncErr);
+      }
 
       res.json({ success: true, shopifyOrderId: order.id, shopifyOrderName: order.name });
     } catch (err) {
