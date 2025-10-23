@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthUser } from "@/lib/auth";
 
+const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"] as const;
+
 export default function AccountStep() {
   const { account, setAccount } = useExpertCtx();
   const [agree, setAgree] = useState(Boolean(account.agreeTerms));
@@ -22,7 +24,16 @@ export default function AccountStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
-  const required = Boolean(account.firstName && account.lastName && account.email && agree);
+  const fullName = `${account.firstName || ""} ${account.lastName || ""}`.trim();
+
+  const handleNameChange = (value: string) => {
+    const parts = value.trim().split(/\s+/);
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ");
+    setAccount({ firstName, lastName });
+  };
+
+  const required = Boolean(account.firstName && account.email && agree);
 
   return (
     <div className="min-h-screen flex flex-col">
