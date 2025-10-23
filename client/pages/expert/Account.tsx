@@ -40,18 +40,12 @@ export default function AccountStep() {
       <div className="container mx-auto flex-1 pb-24 lg:pb-8">
         <div className="mx-auto max-w-3xl rounded-lg border p-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label>First Name</Label>
+            <div className="md:col-span-2">
+              <Label>Name</Label>
               <Input
-                value={account.firstName || ""}
-                onChange={(e) => setAccount({ firstName: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Last Name</Label>
-              <Input
-                value={account.lastName || ""}
-                onChange={(e) => setAccount({ lastName: e.target.value })}
+                value={fullName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="Full name"
               />
             </div>
             {!authUser && (
@@ -81,18 +75,18 @@ export default function AccountStep() {
             </div>
             <div>
               <Label>Gender</Label>
-              <Input
-                placeholder="Prefer not to say"
-                value={account.gender || ""}
-                onChange={(e) => setAccount({ gender: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>User Name</Label>
-              <Input
-                value={account.username || ""}
-                onChange={(e) => setAccount({ username: e.target.value })}
-              />
+              <Select value={account.gender || ""} onValueChange={(v) => setAccount({ gender: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDER_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
