@@ -157,7 +157,7 @@ export default function CartStep() {
               </div>
 
               <Button asChild disabled={!minReached} className="w-full">
-                <Link to="/expert/subscription">Next: Create Subscription</Link>
+                <Link to="/expert/subscription" className="truncate">Next: Create Subscription</Link>
               </Button>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function CartStep() {
         </div>
 
         <Button asChild disabled={!minReached} className="w-full">
-          <Link to="/expert/subscription">Next: Create Subscription</Link>
+          <Link to="/expert/subscription" className="truncate">Next: Create Subscription</Link>
         </Button>
       </div>
     </div>
