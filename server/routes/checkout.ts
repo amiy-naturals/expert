@@ -7,6 +7,7 @@ import { createShopifyOrder, type ShopifyOrderPayload } from "../lib/shopify";
 import { awardOrderPoints, calculateMaxRedeemablePoints } from "../lib/loyalty";
 import { getConfig } from "../lib/env";
 import { getServerSupabase } from "../lib/supabase";
+import { syncReferralCapturesForUser } from "../lib/referrals";
 
 const router = Router();
 const config = getConfig();
