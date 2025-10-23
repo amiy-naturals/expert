@@ -138,6 +138,15 @@ router.post("/shopify", async (req, res) => {
             } catch (err) {
               console.error('Failed to update max_total_spent for user:', err);
             }
+            // Sync max_total_spent to Shopify customer metafield
+            const shopifyCustomerId = order?.customer?.id ? Number(order.customer.id) : null;
+            if (shopifyCustomerId) {
+              try {
+                await updateCustomerMetafield(shopifyCustomerId, "max_total_spent", total);
+              } catch (err) {
+                console.error('Failed to sync max_total_spent to Shopify:', err);
+              }
+            }
           } else if (attribution.customer_external_id) {
             await getServerSupabase().from("external_customers").update({ pending_points: (custPts) }).eq("id", attribution.customer_external_id);
           }
