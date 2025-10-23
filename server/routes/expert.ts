@@ -51,7 +51,7 @@ function errorMessage(err: unknown): string {
 }
 
 // Shared helpers used by main and debug endpoints
-async function validateAndParse(body: any) {
+async function validateAndParse(body: any): Promise<{ parsed: OnboardPayload; diffDays: number }> {
   let data: any = body;
   try {
     if (Buffer.isBuffer(body)) {
@@ -63,7 +63,7 @@ async function validateAndParse(body: any) {
     // If parsing fails, fall back to original body
   }
 
-  const parsed = OnboardSchema.parse(data);
+  const parsed = OnboardSchema.parse(data) as OnboardPayload;
   const today = new Date();
   const next = new Date(parsed.subscription.nextDate + "T00:00:00Z");
   const diffDays = Math.round((+next - +today) / (1000 * 60 * 60 * 24));
