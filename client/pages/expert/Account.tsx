@@ -33,7 +33,7 @@ export default function AccountStep() {
     setAccount({ firstName, lastName });
   };
 
-  const required = Boolean(account.firstName && account.email && agree);
+  const required = Boolean(account.firstName && account.lastName && account.email && agree);
 
   return (
     <div className="min-h-screen flex flex-col">

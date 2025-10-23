@@ -9,7 +9,7 @@ export default function Overview() {
   const activeDocs = Number(rankData?.stats?.activeDoctors ?? 0);
   const teamSales = Number(network?.summary?.totalNetworkSales ?? 0);
   const stats = [
-    { label: "Earnings (this month)", value: `��${monthly.toLocaleString()}` },
+    { label: "Earnings (this month)", value: `₹${monthly.toLocaleString()}` },
     { label: "Team Sales", value: `₹${teamSales.toLocaleString()}` },
     { label: "Patients Enrolled", value: String(patients) },
     { label: "Active Doctors", value: String(activeDocs) },

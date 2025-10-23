@@ -10,7 +10,7 @@ router.get("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
       .from("users")
-      .select("id, email, name, photo_url, avatar_approved, clinic, bio, role, license_number, license_url")
+      .select("id, email, name, photo_url, avatar_approved, bio, role, license_number, license_url")
       .eq("id", req.authUser.id)
       .maybeSingle();
     if (error) throw error;
@@ -34,7 +34,7 @@ router.put("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     // Accept either avatar (client legacy) or photo_url
     if (body?.avatar !== undefined) patch.photo_url = body.avatar;
     if (body?.photo_url !== undefined) patch.photo_url = body.photo_url;
-    const allowed = ["name", "email", "clinic", "bio"];
+    const allowed = ["name", "email", "bio"];
     for (const k of allowed) if (body?.[k] !== undefined) patch[k] = body[k];
     if (Object.keys(patch).length === 0) return res.json({ updated: 0 });
 
@@ -43,7 +43,7 @@ router.put("/me", requireAuth, async (req: AuthenticatedRequest, res) => {
       .from("users")
       .update(patch)
       .eq("id", req.authUser.id)
-      .select("id, email, name, photo_url, avatar_approved, clinic, bio, role")
+      .select("id, email, name, photo_url, avatar_approved, bio, role")
       .maybeSingle();
     if (error) throw error;
     const out = data ? { ...data, avatar: (data as any).photo_url ?? null } : null;
