@@ -8,9 +8,21 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
     Object.entries(h).forEach(([k, v]) => headers.set(k, v));
   }
   if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const fetchOpts = { ...opts, headers, credentials: 'same-origin' } as RequestInit;
+
+  // Debug logging for referral-capture endpoint
+  if (path === '/referral-capture') {
+    console.log('apiFetch DEBUG - /referral-capture:');
+    console.log('  method:', fetchOpts.method);
+    console.log('  headers:', Object.fromEntries(headers.entries()));
+    console.log('  body type:', typeof fetchOpts.body);
+    console.log('  body:', fetchOpts.body);
+  }
+
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, { ...opts, headers, credentials: 'same-origin' });
+    res = await fetch(`/api${path}`, fetchOpts);
   } catch (err: any) {
     // network or CORS error
     throw new Error(`Network request failed: ${err?.message ?? String(err)}`);
