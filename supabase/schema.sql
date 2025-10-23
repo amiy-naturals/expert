@@ -458,26 +458,31 @@ ALTER TABLE points_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Users can read their own row
-CREATE POLICY IF NOT EXISTS users_read_own ON users
+DROP POLICY IF EXISTS users_read_own ON users;
+CREATE POLICY users_read_own ON users
 FOR SELECT
 USING (auth.uid() = id);
 
 -- Policy: Users can update their own row
-CREATE POLICY IF NOT EXISTS users_update_own ON users
+DROP POLICY IF EXISTS users_update_own ON users;
+CREATE POLICY users_update_own ON users
 FOR UPDATE
 USING (auth.uid() = id);
 
 -- Policy: Public read for profiles
-CREATE POLICY IF NOT EXISTS users_read_public ON users
+DROP POLICY IF EXISTS users_read_public ON users;
+CREATE POLICY users_read_public ON users
 FOR SELECT
 USING (true);
 
 -- Policy: Users can read their own points
-CREATE POLICY IF NOT EXISTS points_read_own ON points_transactions
+DROP POLICY IF EXISTS points_read_own ON points_transactions;
+CREATE POLICY points_read_own ON points_transactions
 FOR SELECT
 USING (auth.uid() = user_id);
 
 -- Policy: Users can read their own orders
-CREATE POLICY IF NOT EXISTS orders_read_own ON orders
+DROP POLICY IF EXISTS orders_read_own ON orders;
+CREATE POLICY orders_read_own ON orders
 FOR SELECT
 USING (auth.uid() = user_id);
