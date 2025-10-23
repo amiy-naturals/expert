@@ -227,6 +227,13 @@ router.post(
         context: orderRecord.type === "subscription" ? "subscription" : "one_time",
       });
 
+      // Sync any referral captures matched to this user
+      try {
+        await syncReferralCapturesForUser(req.authUser.id);
+      } catch (syncErr) {
+        console.error("Failed to sync referral captures during checkout:", syncErr);
+      }
+
       res.json({ success: true, shopifyOrderId: order.id, shopifyOrderName: order.name });
     } catch (err) {
       if (err instanceof ZodError) {
