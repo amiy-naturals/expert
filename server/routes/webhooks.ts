@@ -132,6 +132,12 @@ router.post("/shopify", async (req, res) => {
           }
           if (userId) {
             await recordPointsTransaction({ userId, delta: custPts, reason: "order_purchase", metadata: { shopify_order_id }, orderId: undefined });
+            // Update max_total_spent for internal user
+            try {
+              await updateUserMaxTotalSpent(userId, total);
+            } catch (err) {
+              console.error('Failed to update max_total_spent for user:', err);
+            }
           } else if (attribution.customer_external_id) {
             await getServerSupabase().from("external_customers").update({ pending_points: (custPts) }).eq("id", attribution.customer_external_id);
           }
