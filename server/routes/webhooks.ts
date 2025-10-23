@@ -5,6 +5,7 @@ import { pickOrderContact, resolveDoctorChain, isPostJoin } from "../lib/attribu
 import { recordLockedPointsTransaction, recordPointsTransaction } from "../lib/loyalty";
 import { getConfig } from "../lib/env";
 import { sendError } from '../lib/error';
+import { updateUserMaxTotalSpent } from "../lib/orders";
 
 const router = express.Router();
 
