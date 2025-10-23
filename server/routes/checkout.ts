@@ -227,6 +227,13 @@ router.post(
         context: orderRecord.type === "subscription" ? "subscription" : "one_time",
       });
 
+      // Update max_total_spent for user
+      try {
+        await updateUserMaxTotalSpent(req.authUser.id, orderRecord.amount);
+      } catch (maxSpentErr) {
+        console.error("Failed to update max_total_spent:", maxSpentErr);
+      }
+
       // Sync any referral captures matched to this user
       try {
         await syncReferralCapturesForUser(req.authUser.id);
