@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getServerSupabase } from "./supabase";
+import { getConfig } from "./env";
 
 export type OrderType = "one_time" | "subscription";
 export type OrderStatus = "pending" | "paid" | "failed" | "cancelled";
