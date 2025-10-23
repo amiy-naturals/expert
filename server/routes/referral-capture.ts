@@ -42,8 +42,8 @@ export const captureReferral: RequestHandler = async (req, res) => {
       });
     }
 
-    // Parse referral code to get doctor ID
-    // Format: AM-XXXXX where XXXXX is doctor's user ID (first 5 chars)
+    // Parse referral code to get doctor identifier
+    // Format: AM-XXXXX where XXXXX is part of email or username
     const codeParts = referralCode.split('-');
     if (codeParts.length !== 2 || codeParts[0] !== 'AM') {
       return res.status(400).json({
@@ -51,7 +51,7 @@ export const captureReferral: RequestHandler = async (req, res) => {
       });
     }
 
-    const doctorIdShort = codeParts[1];
+    const doctorIdentifier = codeParts[1].toLowerCase();
 
     // Get Supabase client
     const supabase = getSupabase();
@@ -59,13 +59,13 @@ export const captureReferral: RequestHandler = async (req, res) => {
       return res.status(500).json({ message: 'Database connection failed' });
     }
 
-    // Find doctor by username or partial ID match
-    // The referral code is based on doctor's ID, so we need to decode it
-    // For now, we'll search by referral code which should map to a doctor
+    // Find doctor by email prefix or username
+    // The referral code is AM-{emailPrefix} where emailPrefix is part before @
+    // So we search for emails starting with that prefix
     const { data: doctors, error: doctorError } = await supabase
       .from('users')
       .select('id, name, email, username')
-      .or(`username.eq.${referralCode},id.ilike.${doctorIdShort}%`)
+      .or(`email.ilike.${doctorIdentifier}@%,username.ilike.${doctorIdentifier}%`)
       .limit(1);
 
     if (doctorError) {
