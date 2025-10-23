@@ -28,6 +28,8 @@ const OnboardSchema = z.object({
     .optional(),
 });
 
+type OnboardPayload = z.infer<typeof OnboardSchema>;
+
 function getDiscountPct(amount: number) {
   if (amount >= 3000) return 25;
   if (amount >= 2000) return 20;
