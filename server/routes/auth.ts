@@ -1,62 +1,76 @@
 import { Router, RequestHandler } from 'express';
-import { jwtDecode } from 'jwt-decode';
+import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
 
 const router = Router();
+
+function base64UrlEncode(input: string | Buffer) {
+  return Buffer.from(input)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+function signJwt(payload: Record<string, any>, secret: string, expiresInSeconds = 60 * 60 * 24) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const body = { iat: now, exp: now + expiresInSeconds, ...payload };
+  const headerB64 = base64UrlEncode(JSON.stringify(header));
+  const bodyB64 = base64UrlEncode(JSON.stringify(body));
+  const toSign = `${headerB64}.${bodyB64}`;
+  const signature = crypto.createHmac('sha256', secret).update(toSign).digest('base64');
+  const signatureB64 = signature.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return `${toSign}.${signatureB64}`;
+}
 
 // POST /api/auth/google - Google OAuth verification
 const handleGoogleAuth: RequestHandler = async (req, res) => {
   const { credential } = req.body;
 
   if (!credential) {
-    res.status(400).json({ message: "Missing credential" });
+    res.status(400).json({ message: 'Missing credential' });
+    return;
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    res.status(500).json({ message: 'Google client ID not configured on server' });
     return;
   }
 
   try {
-    // Decode and verify the JWT token from Google
-    const decoded = jwtDecode<{
-      iss: string;
-      sub: string;
-      aud: string;
-      iat: number;
-      exp: number;
-      email: string;
-      email_verified: boolean;
-      name: string;
-      picture: string;
-    }>(credential);
+    const client = new OAuth2Client(clientId);
+    const ticket = await client.verifyIdToken({ idToken: credential, audience: clientId });
+    const payload = ticket.getPayload();
 
-    // Verify the token is from Google
-    if (!decoded.iss?.includes("google")) {
-      res.status(401).json({ message: "Invalid token issuer" });
+    if (!payload) {
+      res.status(401).json({ message: 'Invalid token payload' });
       return;
     }
 
-    // Verify email is verified
-    if (!decoded.email_verified) {
-      res.status(401).json({ message: "Email not verified by Google" });
+    if (!payload.email_verified) {
+      res.status(401).json({ message: 'Email not verified by Google' });
       return;
     }
 
-    // Return user data
     const user = {
-      id: decoded.sub,
-      email: decoded.email,
-      name: decoded.name,
-      picture: decoded.picture,
-      role: "doctor",
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+      issuer: payload.iss,
     };
 
-    // In production, you would:
-    // 1. Check if user exists in database
-    // 2. Create user if doesn't exist
-    // 3. Generate a session token/JWT for your app
-    // 4. Return tokens instead of just user data
+    // Sign a simple JWT for the application using SUPABASE_JWT_SECRET or fallback
+    const secret = process.env.SUPABASE_JWT_SECRET || process.env.JWT_SECRET || process.env.TEST_PASSWORD || 'dev_secret';
+    const token = signJwt({ sub: user.id, email: user.email }, secret, 60 * 60 * 24 * 7); // 7 days
 
-    res.json({ user, token: credential });
+    // NOTE: In production you should persist the user in your DB and issue a proper session
+    res.json({ user, token });
   } catch (err) {
-    console.error("Google auth error:", err);
-    res.status(401).json({ message: "Invalid token" });
+    console.error('Google auth error:', err);
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
