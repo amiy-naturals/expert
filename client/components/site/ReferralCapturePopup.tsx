@@ -58,7 +58,7 @@ export default function ReferralCapturePopup({ referralCode, onSuccess }: Referr
     setIsLoading(true);
 
     try {
-      const response = await apiFetch('/referral-capture', {
+      const data = await apiFetch('/referral-capture', {
         method: 'POST',
         body: JSON.stringify({
           referralCode,
@@ -67,12 +67,6 @@ export default function ReferralCapturePopup({ referralCode, onSuccess }: Referr
         }),
       });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || 'Failed to capture referral');
-      }
-
-      const data = await response.json();
       toast.success('Thank you! We\'ll stay in touch with you.');
 
       // Reset form
