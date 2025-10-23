@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z, ZodError } from "zod";
 import { getRazorpay, verifyPaymentSignature } from "../lib/razorpay";
 import { requireAuth, type AuthenticatedRequest } from "../middleware/auth";
-import { createOrderRecord, updateOrderRecord } from "../lib/orders";
+import { createOrderRecord, updateOrderRecord, updateUserMaxTotalSpent } from "../lib/orders";
 import { createShopifyOrder, type ShopifyOrderPayload } from "../lib/shopify";
 import { awardOrderPoints, calculateMaxRedeemablePoints } from "../lib/loyalty";
 import { getConfig } from "../lib/env";
