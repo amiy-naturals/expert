@@ -1,5 +1,5 @@
 import { Router, RequestHandler } from 'express';
-import { getSupabase } from '../lib/supabase';
+import { getServerSupabase } from '../lib/supabase';
 import { normalizeEmail, normalizePhoneE164 } from '../lib/contacts';
 import { getConfig } from '../lib/env';
 import { z } from 'zod';
