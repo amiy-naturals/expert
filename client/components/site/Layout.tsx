@@ -21,7 +21,7 @@ export default function Layout() {
 
 function Header() {
   const nav = [
-    { label: "Shop", to: "/shop" },
+    { label: "Shop", to: "https://amiynaturals.com/", external: true },
     { label: "Amiy Army", to: "/army" },
     { label: "Compensation", to: "/compensation" },
   ];
@@ -42,15 +42,27 @@ function Header() {
           />
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {nav.map((i) => (
-            <Link
-              key={i.to}
-              to={i.to}
-              className="text-foreground/80 hover:text-foreground transition-colors"
-            >
-              {i.label}
-            </Link>
-          ))}
+          {nav.map((i) =>
+            (i as any).external ? (
+              <a
+                key={i.to}
+                href={i.to}
+                className="text-foreground/80 hover:text-foreground transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {i.label}
+              </a>
+            ) : (
+              <Link
+                key={i.to}
+                to={i.to}
+                className="text-foreground/80 hover:text-foreground transition-colors"
+              >
+                {i.label}
+              </Link>
+            )
+          )}
         </nav>
         <div className="flex items-center gap-2">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -62,16 +74,29 @@ function Header() {
             <SheetContent side="right" className="w-full sm:w-96">
               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <nav className="flex flex-col gap-4 mt-8">
-                {nav.map((i) => (
-                  <Link
-                    key={i.to}
-                    to={i.to}
-                    className="text-foreground/80 hover:text-foreground transition-colors py-2 text-base"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {i.label}
-                  </Link>
-                ))}
+                {nav.map((i) =>
+                  (i as any).external ? (
+                    <a
+                      key={i.to}
+                      href={i.to}
+                      className="text-foreground/80 hover:text-foreground transition-colors py-2 text-base"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {i.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={i.to}
+                      to={i.to}
+                      className="text-foreground/80 hover:text-foreground transition-colors py-2 text-base"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {i.label}
+                    </Link>
+                  )
+                )}
                 <div className="border-t my-4 pt-4 flex flex-col gap-3">
                   <MobileAuthActions onClose={() => setIsOpen(false)} />
                 </div>
