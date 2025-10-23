@@ -82,8 +82,24 @@ router.get('/proxy', async (req, res) => {
     const bucketName = bucket || process.env.SUPABASE_BUCKET || 'user-uploads';
 
     const { data, error } = await supabase.storage.from(bucketName).download(String(key));
-    if (error) return res.status(500).json({ error });
-    if (!data) return res.status(404).end();
+
+    // If file not found or error, return default avatar SVG as fallback
+    if (error || !data) {
+      const fs = await import('fs');
+      const path = await import('path');
+      try {
+        const defaultAvatarPath = path.join(process.cwd(), 'public', 'default-avatar.svg');
+        const defaultAvatarBuffer = fs.readFileSync(defaultAvatarPath);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send(defaultAvatarBuffer);
+      } catch (svgErr) {
+        // If default avatar not found, return a simple placeholder response
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#e5e7eb" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="#9ca3af" font-size="14">Image</text></svg>');
+      }
+    }
 
     // Try to obtain bytes from different returned types
     let buffer: Buffer | null = null;
@@ -102,7 +118,20 @@ router.get('/proxy', async (req, res) => {
         buffer = Buffer.concat(chunks);
       }
     } catch (e) {
-      return res.status(500).json({ error: 'failed_to_read_object' });
+      // If we can't read the object, return default avatar
+      const fs = await import('fs');
+      const path = await import('path');
+      try {
+        const defaultAvatarPath = path.join(process.cwd(), 'public', 'default-avatar.svg');
+        const defaultAvatarBuffer = fs.readFileSync(defaultAvatarPath);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send(defaultAvatarBuffer);
+      } catch {
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.send('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#e5e7eb" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="#9ca3af" font-size="14">Image</text></svg>');
+      }
     }
 
     // Simple content-type inference from file extension
