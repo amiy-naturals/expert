@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
       productType: product.product_type,
       tags:
         typeof product.tags === "string"
-          ? product.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+          ? (product.tags as string).split(",").map((tag) => tag.trim()).filter(Boolean)
           : product.tags,
       images: product.images.map((img) => ({
         id: img.id,
@@ -94,7 +94,7 @@ router.get("/:handle", async (req, res) => {
       productType: product.product_type,
       tags:
         typeof product.tags === "string"
-          ? product.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+          ? (product.tags as string).split(",").map((tag) => tag.trim()).filter(Boolean)
           : product.tags,
       images: product.images.map((img) => ({
         id: img.id,
