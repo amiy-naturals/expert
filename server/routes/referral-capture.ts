@@ -24,81 +24,44 @@ const captureSchema = z.object({
  */
 export const captureReferral: RequestHandler = async (req, res) => {
   try {
-    // Handle body parsing for different contexts (Express, serverless-http, etc)
     let body = req.body;
+    const contentType = req.get('content-type') || '';
 
-    // Debug: Log detailed request info
-    console.log('=== REFERRAL-CAPTURE DEBUG ===');
-    console.log('Method:', req.method);
-    console.log('Path:', req.path);
-    console.log('Content-Type:', req.get('content-type'));
-    console.log('Content-Length:', req.get('content-length'));
-    console.log('Body type:', typeof body);
-    console.log('Body is Buffer:', Buffer.isBuffer(body));
-    console.log('Body keys:', body && typeof body === 'object' ? Object.keys(body) : 'N/A');
-    console.log('Raw body:', JSON.stringify(body));
-
-    // If body is a Buffer (serverless-http in some cases), convert to string first
+    // Handle Buffer body (from serverless-http)
     if (Buffer.isBuffer(body)) {
-      console.log('Converting Buffer to string');
-      body = body.toString('utf-8');
+      try {
+        body = JSON.parse(body.toString('utf-8'));
+      } catch (e) {
+        return res.status(400).json({ message: 'Invalid request: malformed JSON in buffer' });
+      }
     }
 
-    // If body is a string, parse it as JSON
+    // Handle string body
     if (typeof body === 'string') {
-      if (!body || body.length === 0) {
-        return res.status(400).json({
-          message: 'Invalid request: empty request body',
-          debug: {
-            contentLength: req.get('content-length'),
-            contentType: req.get('content-type'),
-          },
-        });
+      if (!body) {
+        return res.status(400).json({ message: 'Invalid request: empty request body' });
       }
-      console.log('Parsing string body as JSON');
       try {
         body = JSON.parse(body);
       } catch (e) {
-        return res.status(400).json({
-          message: 'Invalid request: malformed JSON',
-          details: String(e),
-        });
+        return res.status(400).json({ message: 'Invalid request: malformed JSON' });
       }
     }
 
-    // Ensure body is an object
+    // If still no valid body, return error
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
-      const debugInfo = {
-        type: typeof body,
-        isBuffer: Buffer.isBuffer(body),
-        isArray: Array.isArray(body),
-        keys: typeof body === 'object' ? Object.keys(body) : [],
-        contentType: req.get('content-type'),
-        contentLength: req.get('content-length'),
-        method: req.method,
-        headers: req.headers,
-      };
-      console.error('Invalid body:', debugInfo);
       return res.status(400).json({
         message: 'Invalid request: body must be a JSON object',
-        debug: debugInfo,
+        received: typeof body,
       });
     }
-
-    console.log('Parsed body successfully:', body);
-    console.log('==============================');
 
     const parsed = captureSchema.safeParse(body);
 
     if (!parsed.success) {
-      console.log('Validation errors:', parsed.error.errors);
       return res.status(400).json({
         message: 'Invalid request: validation failed',
         errors: parsed.error.errors,
-        debug: {
-          receivedBody: body,
-          contentType: req.get('content-type'),
-        },
       });
     }
 
