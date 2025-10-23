@@ -146,9 +146,9 @@ router.post("/onboard", requireAuth, async (req: AuthenticatedRequest, res) => {
 
     await insertOnboardingSnapshot(uid, parsed);
 
-    const { lineItems, total } = await buildLineItems(parsed.cart).then(({ lineItems, total }) => ({ lineItems, total }));
+    const { lineItems, total } = await buildLineItems(parsed.cart as { productId: string; qty: number }[]).then(({ lineItems, total }) => ({ lineItems, total }));
 
-    await createSubscriptionsFor(uid, parsed.subscription, lineItems.map(li => ({ variantId: li.variantId, quantity: li.quantity })));
+    await createSubscriptionsFor(uid, parsed.subscription as { nextDate: string; frequency: "monthly" | "alternate" }, lineItems.map(li => ({ variantId: li.variantId, quantity: li.quantity })));
 
     const { order, orderRecord } = await createRazorpayAndOrder(uid, total, lineItems);
 
