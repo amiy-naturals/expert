@@ -92,8 +92,8 @@ export default function ReviewStep() {
         <Button asChild variant="outline" className="flex-1">
           <Link to="/expert/account">Back</Link>
         </Button>
-        <Button onClick={submit} loading={loading} disabled={loading} className="flex-1">
-          Submit
+        <Button onClick={submit} loading={loading} disabled={loading} className="flex-1 truncate">
+          <span>Submit</span>
         </Button>
       </div>
     </div>
