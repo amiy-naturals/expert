@@ -24,7 +24,28 @@ const captureSchema = z.object({
  */
 export const captureReferral: RequestHandler = async (req, res) => {
   try {
-    const parsed = captureSchema.safeParse(req.body);
+    // Ensure body is parsed as JSON (fallback if middleware didn't parse it)
+    let body = req.body;
+
+    // If body is a string, parse it as JSON
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        return res.status(400).json({
+          message: 'Invalid request: malformed JSON',
+        });
+      }
+    }
+
+    // If body is empty, provide helpful error
+    if (!body || typeof body !== 'object') {
+      return res.status(400).json({
+        message: 'Invalid request: empty or invalid body',
+      });
+    }
+
+    const parsed = captureSchema.safeParse(body);
 
     if (!parsed.success) {
       return res.status(400).json({
