@@ -1,12 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import ReviewsSection from '@/components/Reviews/Reviews';
 import JoinCTA from '@/components/site/JoinCTA';
+import ReferralCapturePopup from '@/components/site/ReferralCapturePopup';
 import { toast } from 'sonner';
 import { openRazorpay } from '@/lib/razorpay';
 
 export default function Index() {
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref') || '';
+
   return (
     <div className="bg-background text-foreground">
+      {referralCode && <ReferralCapturePopup referralCode={referralCode} />}
       <Hero />
       <CoreConcept />
       <RevenueStreams />
