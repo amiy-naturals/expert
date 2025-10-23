@@ -8,13 +8,6 @@ const router = Router();
 router.get("/status", async (_req, res) => {
   try {
     const supabase = getServerSupabase();
-    // Check current user and basic privileges
-    const [{ rows: current }, { rows: privs }] = await Promise.all([
-      // current_user and session_user
-      supabase.rpc("pg_stat_get_backend_pid").catch(() => ({ rows: [] })),
-      // Use raw SQL to inspect privileges (safe when run by service role)
-      (supabase.from("pg_catalog.pg_roles").select("rolname").limit(1).catch(() => ({ data: null })) as any),
-    ] as any);
 
     // Try simple selects to verify access
     let referralsOk = true;
@@ -31,7 +24,7 @@ router.get("/status", async (_req, res) => {
       usersOk = false;
     }
     try {
-      await supabase.from("order_attributions").select("level1_doctor_id").limit(1);
+      await supabase.from("order_attributions").select("shopify_order_id").limit(1);
     } catch {
       ordersOk = false;
     }
